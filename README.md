@@ -31,6 +31,8 @@ Development of  version 3 of the AGBNP model (AGBNP3) is supported by a grant fr
 
 Portions of this software, limited to the driver file `libagbnp3.c`, have been adapted from the AGBNP2 library developed by the author while at Rutgers University in the group of Ronald M. Levy. 
 
+The sse_mathfun library has been written by Julien Pommier and released under the zlib license. See license declaration in `sse_mathfun.h`.
+
 ## Installation
  
 On a Linux system with gcc type `make install` in source directory. Link your code to the `libagbnp3.a` and `libnblist.a` libraries generated. Add the source directory to include path.

@@ -9,7 +9,10 @@
                                                                            
  The software may be used under the terms of the GNU Lesser General Public 
  License (LGPL).  A copy of this license may be found at this address:     
- https://www.gnu.org/licenses/lgpl.html                                    
+ https://www.gnu.org/licenses/lgpl.html
+
+ The sse_mathfun library is authored by Julien Pommier and released under 
+ the zlib license. See license declaration in sse_mathfun.h
                                                                            
  Permission is hereby granted, free of charge, to any person obtaining a   
  copy of this software and associated documentation files (the "Software"),
