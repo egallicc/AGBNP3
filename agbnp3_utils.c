@@ -102,6 +102,68 @@ int agbnp3_realloc(void **memptr, const size_t old_size, const size_t new_size){
   return retcode;
 }
 
+
+int agbnp3_create_ctablef42d(AGBNPdata *agb,
+			     int na, float_a amax, 
+			    int nb, float_a bmax, 
+			    C1Table2DH **table2d){
+  C1Table2DH *tbl2d;
+  float_a b, db;
+
+  int i;
+  float_a bmax1;
+
+
+  agbnp3_create_ctablef42d_hash(agb, na, amax, &tbl2d);
+  *table2d = tbl2d;
+  return AGBNP_OK;
+}
+
+int agbnp3_interpolate_ctablef42d(C1Table2DH *table2d, float_a x, float_a y,
+				 float_a *f, float_a *fp){
+  int iy, key;
+  float_a y2;
+  float_a dy, dyinv;
+  float_a a, b;
+  C1Table *table1;
+  int nkey = table2d->nkey;
+
+  key = y * nkey;
+  iy = agbnp3_h_find(table2d->y2i, key);
+  table1 = table2d->table[iy];
+  agbnp3_interpolate_ctable(table1, x, f, fp);
+  return AGBNP_OK;
+}
+
+
+/* initializes i4p(), the lookup table version of i4 */
+int agbnp3_init_i4p(AGBNPdata *agb){
+  if(agb->f4c1table2dh != NULL){
+    return AGBNP_OK;
+  }
+  if(agbnp3_create_ctablef42d(agb, 
+			      F4LOOKUP_NA, F4LOOKUP_MAXA,
+			      F4LOOKUP_NB, F4LOOKUP_MAXB,
+			      &(agb->f4c1table2dh)) != AGBNP_OK){
+    agbnp3_errprint("agbnp3_init_i4p(): error in agbnp3_create_ctablef42d()\n");
+    return AGBNP_ERR;
+  }
+  return AGBNP_OK;
+}
+
+float_a agbnp3_i4p(AGBNPdata *agb, float_a rij, float_a Ri, float_a Rj, 
+	    float_a *dr){
+  float_a a, b, rj1, f, fp, u, ainv, ainv2;
+  static const float_a pf = (4.*pi)/3.;
+
+  a = rij/Rj;
+  b = Ri/Rj;
+  agbnp3_interpolate_ctablef42d(agb->f4c1table2dh, a, b, &f, &fp);
+  *dr = fp/(Rj*Rj);
+
+  return f/Rj;
+}
+
 /* cubic spline setup */
 /*
 This code is based on the cubic spline interpolation code presented in:
@@ -862,3 +924,167 @@ int agbnp3_test_create_ctablef42d_hash(AGBNPdata *agb, float amax, C1Table2DH *t
 }
 
 
+int agbnp3_reallocate_gbuffers(AGBworkdata *agbw, int size){
+  int i;
+  int err;
+  int old_size = agbw->gbuffer_size;
+  size_t n = old_size*sizeof(float);
+  size_t m = size*sizeof(float);
+
+  agbnp3_realloc((void **)&(agbw->a1), n, m);
+  agbnp3_realloc((void **)&(agbw->p1), n , m);
+  agbnp3_realloc((void **)&(agbw->c1x), n, m);
+  agbnp3_realloc((void **)&(agbw->c1y), n, m);
+  agbnp3_realloc((void **)&(agbw->c1z), n, m);
+
+  agbnp3_realloc((void **)&(agbw->a2), n, m);
+  agbnp3_realloc((void **)&(agbw->p2), n, m);
+  agbnp3_realloc((void **)&(agbw->c2x), n, m);
+  agbnp3_realloc((void **)&(agbw->c2y), n, m);
+  agbnp3_realloc((void **)&(agbw->c2z), n, m);
+
+  agbnp3_realloc((void **)&(agbw->v3), n, m);
+  agbnp3_realloc((void **)&(agbw->v3p), n, m);
+  agbnp3_realloc((void **)&(agbw->fp3), n, m);
+  agbnp3_realloc((void **)&(agbw->fpp3), n, m);
+
+  if(!(agbw->a1 && agbw->p1 && agbw->c1x && agbw->c1y && agbw->c1z &&
+       agbw->a2 && agbw->p2 && agbw->c2x && agbw->c2y && agbw->c2z &&
+       agbw->v3 && agbw->v3p && agbw->fp3 && agbw->fpp3 )){
+      agbnp3_errprint( "agbnp3_reallocate_gbuffers(): error allocating memory for Gaussian overlap buffers.\n");
+      return AGBNP_ERR;
+  }
+
+  agbw->gbuffer_size = size;
+
+  return AGBNP_OK;
+}
+
+int agbnp3_reallocate_hbuffers(AGBworkdata *agbw, int size){
+  int i;
+  int err;
+  int old_size = agbw->hbuffer_size;
+  size_t n = old_size*sizeof(float);
+  size_t m = size*sizeof(float);
+
+  agbnp3_realloc((void **)&(agbw->hiat), old_size*sizeof(int), size*sizeof(int));
+
+  agbnp3_realloc((void **)&(agbw->ha1), n, m);
+  agbnp3_realloc((void **)&(agbw->hp1), n , m);
+  agbnp3_realloc((void **)&(agbw->hc1x), n, m);
+  agbnp3_realloc((void **)&(agbw->hc1y), n, m);
+  agbnp3_realloc((void **)&(agbw->hc1z), n, m);
+
+  agbnp3_realloc((void **)&(agbw->ha2), n, m);
+  agbnp3_realloc((void **)&(agbw->hp2), n, m);
+  agbnp3_realloc((void **)&(agbw->hc2x), n, m);
+  agbnp3_realloc((void **)&(agbw->hc2y), n, m);
+  agbnp3_realloc((void **)&(agbw->hc2z), n, m);
+
+  agbnp3_realloc((void **)&(agbw->hv3), n, m);
+  agbnp3_realloc((void **)&(agbw->hv3p), n, m);
+  agbnp3_realloc((void **)&(agbw->hfp3), n, m);
+  agbnp3_realloc((void **)&(agbw->hfpp3), n, m);
+
+  if(!(agbw->hiat && agbw->ha1 && agbw->hp1 && agbw->hc1x && agbw->hc1y && agbw->hc1z &&
+       agbw->ha2 && agbw->hp2 && agbw->hc2x && agbw->hc2y && agbw->hc2z &&
+       agbw->hv3 && agbw->hv3p && agbw->hfp3 && agbw->hfpp3 )){
+      agbnp3_errprint( "agbnp3_reallocate_hbuffers(): error allocating memory for Gaussian overlap buffers.\n");
+      return AGBNP_ERR;
+  }
+
+  agbw->hbuffer_size = size;
+
+  return AGBNP_OK;
+}
+
+int agbnp3_reallocate_qbuffers(AGBworkdata *agbw, int size){
+  int i;
+  int err;
+  int old_size = agbw->qbuffer_size;
+  size_t n = old_size*sizeof(float);
+  size_t m = size*sizeof(float);
+
+  agbnp3_realloc((void **)&(agbw->qdv), n, m);
+  agbnp3_realloc((void **)&(agbw->qR1v), n , m);
+  agbnp3_realloc((void **)&(agbw->qR2v), n, m);
+  agbnp3_realloc((void **)&(agbw->qqv), n, m);
+  agbnp3_realloc((void **)&(agbw->qdqv), n, m);
+  agbnp3_realloc((void **)&(agbw->qav), n, m);
+  agbnp3_realloc((void **)&(agbw->qbv), n, m);
+
+  agbnp3_realloc((void **)&(agbw->qkv), n, m);
+  agbnp3_realloc((void **)&(agbw->qxh), n, m);
+  agbnp3_realloc((void **)&(agbw->qyp), n, m);
+  agbnp3_realloc((void **)&(agbw->qy), n, m);
+  agbnp3_realloc((void **)&(agbw->qy2p), n, m);
+  agbnp3_realloc((void **)&(agbw->qy2), n, m);
+  agbnp3_realloc((void **)&(agbw->qf1), n, m);
+  agbnp3_realloc((void **)&(agbw->qf2), n, m);
+  agbnp3_realloc((void **)&(agbw->qfp1), n, m);
+  agbnp3_realloc((void **)&(agbw->qfp2), n, m);
+
+
+  if(!(agbw->qdv && agbw->qR1v && agbw->qR2v && agbw->qqv && agbw->qdqv && agbw->qav && agbw->qav)){
+      agbnp3_errprint( "agbnp3_reallocate_qbuffers(): error allocating memory for inverse born radii buffers.\n");
+      return AGBNP_ERR;
+  }
+
+  agbw->qbuffer_size = size;
+
+  return AGBNP_OK;
+}
+
+int agbnp3_reallocate_wbuffers(AGBworkdata *agbw, int size){
+  int i;
+  int err;
+  int old_size = agbw->wbuffer_size;
+  size_t n = old_size*sizeof(float);
+  size_t m = size*sizeof(float);
+  
+  agbnp3_realloc((void **)&(agbw->wb_iatom), old_size*sizeof(int), size*sizeof(int));
+
+  agbnp3_realloc((void **)&(agbw->wb_gvolv), n, m);
+  agbnp3_realloc((void **)&(agbw->wb_gderwx), n , m);
+  agbnp3_realloc((void **)&(agbw->wb_gderwy), n, m);
+  agbnp3_realloc((void **)&(agbw->wb_gderwz), n, m);
+  agbnp3_realloc((void **)&(agbw->wb_gderix), n, m);
+  agbnp3_realloc((void **)&(agbw->wb_gderiy), n, m);
+  agbnp3_realloc((void **)&(agbw->wb_gderiz), n, m);
+
+  if(!(agbw->wb_iatom && agbw->wb_gderwx && agbw->wb_gderwy && agbw->wb_gderwz &&
+       agbw->wb_gderix &&  agbw->wb_gderiy && agbw->wb_gderiz)){ 
+    agbnp3_errprint( "agbnp3_reallocate_wbuffers(): error allocating memory for water sites buffers.\n");
+      return AGBNP_ERR;
+  }
+
+  agbw->wbuffer_size = size;
+
+  return AGBNP_OK;
+}
+
+
+int agbnp3_reallocate_overlap_lists(AGBworkdata *agbw, int size){
+  int i;
+
+  for(i=0;i<2;i++){
+
+    agbnp3_realloc((void **)&(agbw->overlap_lists[i]), 
+		   agbw->size_overlap_lists[i]*sizeof(GOverlap),
+		   size*sizeof(GOverlap));
+    agbw->size_overlap_lists[i] = size;
+
+    agbnp3_realloc((void **)&(agbw->root_lists[i]), 
+		   agbw->size_overlap_lists[i]*sizeof(int),
+		   size*sizeof(GOverlap));
+    agbw->size_root_lists[i] = size;
+
+    if(!(agbw->overlap_lists[i] && agbw->root_lists[i])){
+      agbnp3_errprint( "agbnp3_reallocate_overlap_lists(): error allocating memory for overlap lists.\n");
+      return AGBNP_ERR;
+    }
+
+  }
+
+  return AGBNP_OK;
+}

@@ -85,21 +85,6 @@ typedef double float_a;
 #define KFC (2.5)
 #define PFC (2.97354)
 
-/* HB types */
-#define AGBNP_HB_INACTIVE   (0)
-/* donor polar hydrogen */
-#define AGBNP_HB_POLARH       (1)
-/* acceptor geometries */
-#define AGBNP_HB_TRIGONAL    (10)
-#define AGBNP_HB_TRIGONAL_S  (30)
-#define AGBNP_HB_TETRAHEDRAL (20)
-/* HB subtypes */
-#define AGBNP_HB_TRIGONAL1    (11)
-#define AGBNP_HB_TRIGONAL2    (12)
-#define AGBNP_HB_TRIGONAL_OOP (13) /* out of plane */
-#define AGBNP_HB_TETRAHEDRAL1 (21) /* like O in sulfones */
-#define AGBNP_HB_TETRAHEDRAL2 (22) /* like sp3 O */
-#define AGBNP_HB_TETRAHEDRAL3 (23) /* like sp3 N */
 
 /* bond length for water sites pseudo-atoms */
 #define AGBNP_HB_LENGTH (2.5) 
@@ -124,15 +109,6 @@ typedef double float_a;
 #ifndef AGBNP_HB_SWA0
 #define AGBNP_HB_SWA0 (0.4)
 #endif
-
-#ifndef AGBNP_CELL_SIDE
-#define AGBNP_CELL_SIDE (6.5)
-#endif
-
-
-// new water site free volume code
-#define SCALEV
-
 
 /* "jump" parameter of hash table */
 //#define AGBNP_HT_JUMP (501)
@@ -179,14 +155,6 @@ typedef struct wat_ {
 } WSat;
 
 
-/*
-typedef struct hashdata {
-  float_a vpji;
-  float_a q4ij;
-  float_a q4ji;
-} HashData;
-*/
-
 typedef struct twofloats {
   float_a q4ij;
   float_a q4ji;
@@ -205,22 +173,6 @@ typedef struct ghtable {
   unsigned int nat;
   HTable **ht;       /* list of 1D hash tables */
 } GHTable;
-
-/* a cell for the cell list */
-typedef struct {
-  float_a pos;   /* position of center of cell */
-  int natoms;    /* number of atoms in cell */
-  int *iatom;   /* list of atom indexes in cell */
-} cell_t;
-
-/* cell list */
-typedef struct {
-  float_a side;    /* side length of cells */
-  float_a min[3], max[3]; /* bounding box coordinates of box of cells 
-                             min (x,y,z) and max (x,y,z) */
-  int n,m,p;   /* number of cells in x, y and z directions */
-  cell_t ***cell; /* cell[i][j][k] is cell at position i, j, k */ 
-} cell_list_t;
 
 /* 1D and 2D cubic splines lookup tables */
 typedef struct c1table_  {
@@ -482,8 +434,6 @@ typedef struct AGBNPdata_ {
 
   NeighList *conntbl; /* atomic connection table */
 
-  cell_list_t *cell_list; /* cell list for molecule (incompatible with PBC's)*/
-
   int *int2ext; /* mapping from internal to external indexes */
   int *ext2int; /* mapping from external to internal indexes */
 
@@ -554,21 +504,8 @@ int agbnp3_tag_ok(int tag);
 
 float_a agbnp3_i4(float_a rij, float_a Ri, float_a Rj, float_a *dr);
 float_a agbnp3_i4p(AGBNPdata *data, float_a rij, float_a Ri, float_a Rj, float_a *dr);
-float_a agbnp3_ogauss_2body_smpl(float_a d2, float_a p1, float_a p2, 
-			  float_a c1, float_a c2);
 float_a agbnp3_swf_area(float_a x, float_a *fp);
 float_a agbnp3_swf_vol3(float_a x, float_a *fp, float_a *fpp, float_a a, float_a b);
-
-float_a agbnp3_ogauss_incremental
-                          (int n, float_a (*x)[3], float_a *a, float_a *p,
-			   float_a *r,
-			   float_a anm1, float_a pnm1, float_a cnm1[3],
-			   float_a *an, float_a *pn, float_a cn[3],
-			   float_a volmina, float_a volminb,
-			   float_a *sr,
-			   float_a (*dr)[3], float_a *dR, 
-			   float_a (*d2rR)[AGBNP_MAX_OVERLAP_LEVEL][3]);
-
 int agbnp3_ogauss_soa(int n1, int n2,
 		 float *c1x, float *c1y, float *c1z, float *a1, float *p1,
 		 float *c2x, float *c2y, float *c2z, float *a2, float *p2,
@@ -586,30 +523,12 @@ float_a agbnp3_swf_invbr(float_a beta, float_a *fp);
 
 int agbnp3_neighbor_lists(AGBNPdata *agb, AGBworkdata *agbw,
 			 float_a *x, float_a *y, float_a *z);
-int agbnp3_self_volumes(AGBNPdata *agb, AGBworkdata *agbw,
-			      float_a *x, float_a *y, float_a *z);
-int agbnp3_self_volumes_ps(AGBNPdata *agb, AGBworkdata *agbw,
-			      float_a *x, float_a *y, float_a *z);
 int agbnp3_self_volumes_rooti(AGBNPdata *agb, AGBworkdata *agbw,
 			      float_a *x, float_a *y, float_a *z);
-
-
-
-
 int agbnp3_scaling_factors(AGBNPdata *agb, AGBworkdata *agbw_h);
-int agbnp3_inverse_born_radii(AGBNPdata *agb, AGBworkdata *agbw_h,
-			     float_a *x, float_a *y, float_a *z,
-			     int init_frozen);
-int agbnp3_inverse_born_radii_nolist(AGBNPdata *agb, AGBworkdata *agbw_h,
-					float_a *x, float_a *y, float_a *z,
-					int init_frozen);
 int agbnp3_inverse_born_radii_nolist_soa(AGBNPdata *agb, AGBworkdata *agbw_h,
 					float_a *x, float_a *y, float_a *z,
 					int init_frozen);
-int agbnp3_inverse_born_radii_nolist_ps(AGBNPdata *agb, AGBworkdata *agbw_h,
-					float_a *x, float_a *y, float_a *z,
-					int init_frozen);
-
  int agbnp3_born_radii(AGBNPdata *agb, AGBworkdata *agbw_h);
  int agbnp3_reset_derivatives(AGBNPdata *agb, AGBworkdata *agbw_h);
 
@@ -653,15 +572,9 @@ int agbnp3_total_energy(AGBNPdata *agb, int init,
 
 int agbnp3_surface_areas(AGBNPdata *agb, AGBworkdata *agbw,
 			float_a *x, float_a *y, float_a *z);
-int agbnp3_cavity_ders(AGBNPdata *agb, AGBworkdata *agbw,
-	       float_a *x, float_a *y, float_a *z);
-
 float_a agbnp3_pol_switchfunc(float_a x, float_a xa, float_a xb,
 			      float_a *fp, float_a *fpp);
 
-int agbnp3_get_neigh_coords(AGBNPdata *agb, 
-				  int iat, NeighList *neigh_list, 
-				  float_a *xj, float_a *yj, float_a *zj);
 int agbnp3_mymax(int a, int b);
 void agbnp3_rtvec(float_a y[3], float_a rot[3][3], float_a x[3]);
 
@@ -678,12 +591,6 @@ void agbnp3_place_wat_hydrogen(float_a xd, float_a yd, float_a zd,
 			      float_a d, 
 			      float_a *xw, float_a *yw, float_a *zw,
 			      float_a der1[3][3], float_a der2[3][3]);
-int agbnp3_ws_free_volumes(AGBNPdata *agb, AGBworkdata *agbw);
-int agbnp3_ws_free_volume_of1(AGBNPdata *agb, AGBworkdata *agbw, 
-			      WSat *wsat, int init);
-int agbnp3_ws_self_volumes(AGBNPdata *agb);
-int agbnp3_ws_correction(AGBNPdata *agb, AGBworkdata *agbw, float_a *ce);
-int agbnp3_ws_correction_der(AGBNPdata *agb, AGBworkdata *agbw);
 void agbnp3_cpyd(float_a *local, float_i *caller, int n);
 
 
@@ -798,8 +705,6 @@ int agbnp3_init_i4p(AGBNPdata *agb);
 int agbnp3_cavity_dersgb_rooti(AGBNPdata *agb, AGBworkdata *agbw,
 			float_a *x, float_a *y, float_a *z);
 
-int agbnp3_LinearEquationsSolving(int nDim, float_a *pfMatr, float_a *pfVect, float_a *pfSolution);
-
 unsigned int two2n_size(unsigned int m);
 HTable *h_create(int nat, int size, int jump);
 void h_delete(HTable *ht);
@@ -826,6 +731,9 @@ void agbnp3_errprint(const char *fmt, ...);
 int agbnp3_memalloc(void **memptr, const size_t size);
 int agbnp3_calloc(void **memptr, const size_t size);
 int agbnp3_ralloc(void **memptr, const size_t old_size, const size_t new_size);
+
+
+
 
 #ifdef USE_SSE
 void print4(__m128 v);
@@ -880,5 +788,11 @@ int agbnp3_list_radius_types(AGBNPdata *agb, float **radii);
 int agbnp3_create_ctablef42d_hash(AGBNPdata *agb, int na, float_a amax, 
 				  C1Table2DH **table2d);
 int agbnp3_test_create_ctablef42d_hash(AGBNPdata *agb, float amax, C1Table2DH *table2d);
+
+int agbnp3_reallocate_gbuffers(AGBworkdata *agbw, int size);
+int agbnp3_reallocate_hbuffers(AGBworkdata *agbw, int size);
+int agbnp3_reallocate_qbuffers(AGBworkdata *agbw, int size);
+int agbnp3_reallocate_wbuffers(AGBworkdata *agbw, int size);
+int agbnp3_reallocate_overlap_lists(AGBworkdata *agbw, int size);
 
 #endif

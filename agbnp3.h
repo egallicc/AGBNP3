@@ -27,6 +27,21 @@ typedef double float_i;
 #endif
 
 
+/* HB types */
+#define AGBNP_HB_INACTIVE   (0)
+/* donor polar hydrogen */
+#define AGBNP_HB_POLARH       (1)
+/* acceptor geometries */
+#define AGBNP_HB_TRIGONAL    (10)
+#define AGBNP_HB_TRIGONAL_S  (30)
+#define AGBNP_HB_TETRAHEDRAL (20)
+/* HB subtypes */
+#define AGBNP_HB_TRIGONAL1    (11)
+#define AGBNP_HB_TRIGONAL2    (12)
+#define AGBNP_HB_TRIGONAL_OOP (13) /* out of plane */
+#define AGBNP_HB_TETRAHEDRAL1 (21) /* like O in sulfones */
+#define AGBNP_HB_TETRAHEDRAL2 (22) /* like sp3 O */
+#define AGBNP_HB_TETRAHEDRAL3 (23) /* like sp3 N */
 
 /* Initializes libagbnp library.*/
 int agbnp3_initialize( void );
@@ -48,7 +63,7 @@ int agbnp3_new(int *tag, int natoms,
 	      int dopbc, int nsym, int ssize,
               float_i *xs, float_i *ys, float_i *zs,
 	      float_i (*rot)[3][3], NeighList *conntbl,
-	       float_i *vdiel_in, int verbose);
+	      float_i *vdiel_in, int verbose);
 
 /* deletes a AGBNP object */
 int agbnp3_delete(int tag);
@@ -63,9 +78,5 @@ int agbnp3_ener(int tag, int init,
 		float_i *evdw, float_i *ecorr_vdw, float_i (*dvwdr)[3], 
 		float_i *ecav, float_i *ecorr_cav, float_i (*decav)[3],
 		float_i *ehb,  float_i (*dehb)[3]);
-
-/* return born radii and scaled radii only (no energies, no derivatives) */
-int agbnp3_bornr(int tag, float_i *x, float_i *y, float_i *z,
-		float_i *sp, float_i *br);
 
 #endif
