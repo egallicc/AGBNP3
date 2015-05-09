@@ -1,3 +1,29 @@
+/* -------------------------------------------------------------------------- *
+ *                                   AGBNP3                                   *
+ * -------------------------------------------------------------------------- *
+ * This file is part of the AGBNP3 implicit solvent model software            *
+ * implementation funded by the National Science Foundation under grant:      *
+ * NSF SI2 1440665  "SI2-SSE: High-Performance Software for Large-Scale       *
+ * Modeling of Binding Equilibria"                                            *
+ *                                                                            *
+ * copyright (c) 2014-2015 Emilio Gallicchio                                  *
+ * Authors: Emilio Gallicchio <egallicchio@brooklyn.cuny.edu>                 *
+ * Contributors:                                                              *
+ *                                                                            *
+ *  AGBNP3 is free software: you can redistribute it and/or modify            *
+ *  it under the terms of the GNU Lesser General Public License version 3     *
+ *  as published by the Free Software Foundation.                             *
+ *                                                                            *
+ *  AGBNP3 is distributed in the hope that it will be useful,                 *
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of            *
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the             *
+ *  GNU General Public License for more details.                              *
+ *                                                                            *
+ *  You should have received a copy of the GNU General Public License         *
+ *  along with AGBNP3.  If not, see <http://www.gnu.org/licenses/>.           *
+ *                                                                            *
+ * -------------------------------------------------------------------------- */
+
 #ifndef AGBNP3_PRIV_H
 #define AGBNP3_PRIV_H
 

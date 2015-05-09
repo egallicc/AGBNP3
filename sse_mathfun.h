@@ -1,13 +1,9 @@
 #ifndef SSE_MATHFUN_H
 #define SSE_MATHFUN_H
-/* SIMD (SSE1+MMX or SSE2) implementation of sin, cos, exp and log
+/* SIMD implementation of sin, cos, exp, log, pow, rsqrt
 
    Inspired by Intel Approximate Math library, and based on the
    corresponding algorithms of the cephes math library
-
-   The default is to use the SSE1 version. If you define USE_SSE2 the
-   the SSE2 intrinsics will be used in place of the MMX intrinsics. Do
-   not expect any significant performance improvement with SSE2.
 */
 
 /* Copyright (C) 2007  Julien Pommier
@@ -30,6 +26,12 @@
 
   (this is the zlib license)
 */
+
+/* 
+   additional contributions as noted 
+   by Emilio Gallicchio <egallicchio@brooklyn.cuny.edu> 
+*/
+
 
 #include <xmmintrin.h>
 
@@ -294,10 +296,14 @@ v4sf exp_ps(v4sf x) {
   return y;
 }
 
+/* power function                                                   */ 
+/* contributed by Emilio Gallicchio <egallicchio@brooklyn.cuny.edu> */
 v4sf pow_ps(v4sf x, v4sf y) {
   return exp_ps(_mm_mul_ps(y,log_ps(x)));
 }
 
+/* inverse square root */
+/* contributed by Emilio Gallicchio <egallicchio@brooklyn.cuny.edu> */
 v4sf rsqrt_ps(v4sf x) {
   v4sf v;
   v4sf pt5 = *(v4sf*)_ps_0p5;
