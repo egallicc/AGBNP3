@@ -68,20 +68,16 @@ For other architecture and/or compilers modify the `mach.macros` file as needed.
  initialized again by calling agbnp_initialize().
  
 ```
- > int agbnp3_new(int *tag, int natoms, 
+typedef double float_i; //can be set to float, see agbnp3.h 
+> int agbnp3_new(int *tag, int natoms, 
 	      float_i *x, float_i *y, float_i *z, float_i *r, 
 	      float_i *charge, float_i dielectric_in, float_i dielectric_out,
 	      float_i *igamma, float_i *sgamma,
 	      float_i *ialpha, float_i *salpha,
-	      float_i *idelta, float_i *sdelta,
 	      int *hbtype, float_i *hbcorr,
 	      int nhydrogen, int *ihydrogen, 
-	      int ndummy, int *idummy,
-	      int *isfrozen,
-	      int dopbc, int nsym, int ssize,
-              float_i *xs, float_i *ys, float_i *zs,
-	      float_i (*rot)[3][3], NeighList *conntbl,
-	      float_i *vdiel_in, int verbose);
+	      NeighList *conntbl,
+	      int verbose);
  ```
 
  Creates a new instance of AGBNP3. If successful
@@ -135,17 +131,7 @@ For other architecture and/or compilers modify the `mach.macros` file as needed.
  
  ihydrogen: atom index of each hydrogen atom. Note that atom indexes start
             from zero.
- 
- idelta:   
- sdelta:   Unused, set to NULL
-
- ndummy:
- idummy: Unused, set to NULL
-
- isfrozen: Unused, set to NULL
-
- dopbc, nsym, ssize, xs, ys, zs, rot, vdiel_in: Unused, set to NULL.
- 
+  
  conntbl: atom connection table. It lists the atoms directly bonded to 
           each atom. It is specified in terms a neigh_list structure 
           defined with the libnblist library - included in the AGBNP3 
