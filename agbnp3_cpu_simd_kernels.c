@@ -552,10 +552,8 @@ int agbnp3_inverse_born_radii_nolist_soa(AGBNPdata *agb, AGBworkdata *agbw_h,
     iv = 0;
     for(jat=iat+1; jat < nheavyat; jat++){
 
-      /* correct scaled volumes */
-      vol2i = mvpji[iat][jat];
-      spiat = sp[iat] - vol2i/vols[iat];
-      spjat = sp[jat] - vol2i/vols[jat];
+      spiat = sp[iat];
+      spjat = sp[jat];
 
       q = qv[iv];
       dr4 = dqv[iv];
@@ -563,7 +561,6 @@ int agbnp3_inverse_born_radii_nolist_soa(AGBNPdata *agb, AGBworkdata *agbw_h,
       br1[jat] -= fourpi1*q*spiat;
       q4cache[iq4cache++] = q;
       q4cache[iq4cache++] = dr4;
-      mq4[iat][jat] = q;
 
       q = qv[iv];
       dr4 = dqv[iv];
@@ -571,7 +568,6 @@ int agbnp3_inverse_born_radii_nolist_soa(AGBNPdata *agb, AGBworkdata *agbw_h,
       br1[iat] -= fourpi1*q*spjat;
       q4cache[iq4cache++] = q;
       q4cache[iq4cache++] = dr4;
-      mq4t[iat][jat] = q;
 
     }
 
@@ -620,7 +616,6 @@ int agbnp3_inverse_born_radii_nolist_soa(AGBNPdata *agb, AGBworkdata *agbw_h,
       br1[jat] -= fourpi1*q*spiat;
       q4cache[iq4cache++] = q;
       q4cache[iq4cache++] = dr4;
-      mq4[iat][jat] = q;
     }
 
   }
@@ -678,15 +673,14 @@ int agbnp3_inverse_born_radii_nolist_soa(AGBNPdata *agb, AGBworkdata *agbw_h,
       dz = z[jat] - z[iat];
       d2 = dx*dx + dy*dy + dz*dz;
       d = mysqrt(d2);
-      volume2 = mvpji[iat][jat];
       q = q4cache[iq4cache++];
       dr4 = q4cache[iq4cache++];
-      spiat = sp[iat] - volume2/vols[iat];
+      spiat = sp[iat];
       htij = q2ab[jat]*dr4*spiat;
       utij = abrw[jat]*dr4*spiat;
       q = q4cache[iq4cache++];
       dr4 = q4cache[iq4cache++];
-      spjat = sp[jat] - volume2/vols[jat];
+      spjat = sp[jat];
       htij += q2ab[iat]*dr4*spjat;
       utij += abrw[iat]*dr4*spjat;
       htij = fourpi1*vdielf*dielectric_factor*htij/d;	
@@ -1301,20 +1295,6 @@ int agbnp3_self_volumes_rooti(AGBNPdata *agb, AGBworkdata *agbw,
 	  d2 = v0*v0 + v1*v1 + v2*v2;
 	  surf_area[kat] += (h3*u1 + h4*d2/u1)/gr[ii];
 	}
-
-	for(ii1=0;ii1<order;ii1++){
-	  iats = gatlist[ii1];
-	  for(ii2=ii1+1;ii2<order;ii2++){
-	    jats = gatlist[ii2];
-	    if(iats<jats){
-	      ia = iats; ja = jats;
-	    }else{
-	      ia = jats; ja = iats;
-	    }
-#pragma omp atomic
-	    mvpji[ia][ja] += w;
-	  }
-	}
 	
       }
 
@@ -1539,19 +1519,7 @@ int agbnp3_self_volumes_rooti(AGBNPdata *agb, AGBworkdata *agbw,
 	      d2 = v0*v0 + v1*v1 + v2*v2;
 	      surf_area[kat] += (h3*u1 + h4*d2/u1)/gr[ii];
 	    }
-	    for(ii1=0;ii1<order;ii1++){
-	      iats = gatlist[ii1];
-	      for(ii2=ii1+1;ii2<order;ii2++){
-		jats = gatlist[ii2];
-		if(iats<jats){
-		  ia = iats; ja = jats;
-		}else{
-		  ia = jats; ja = iats;
-		}
-#pragma omp atomic
-		mvpji[ia][ja] += w;
-	      }
-	    }	    
+
 	  }
 	    
 	}//joverlap in root
@@ -1749,27 +1717,6 @@ int agbnp3_der_vp_rooti(AGBNPdata *agb, AGBworkdata *agbw,
 	u = 0.0;
 	v = 0.0;
 	h = 0.0;
-	for(ii1=0;ii1<order;ii1++){
-	  iats = gatlist[ii1];
-	  for(ii2=ii1+1;ii2<order;ii2++){
-	    jats = gatlist[ii2];
-	    if(iats<jats){
-	      ia = iats; ja = jats;
-	    }else{
-	      ia = jats; ja = iats;
-	    }
-	    q = mq4[ia][ja];
-	    deruij = q2ab[ja]*q/vols[ia];
-	    dervij = abrw[ja]*q/vols[ia];
-	    q = mq4t[ia][ja];
-	    deruji = q2ab[ia]*q/vols[ja];
-	    dervji = abrw[ia]*q/vols[ja];
-	    u -= (deruij+deruji);
-	    v -= (dervij+dervji);
-	  }
-	}
-	
-	/* these are standard coefficients */
 	for(ii=0;ii<order;ii++){
 	  kat = gatlist[ii];
 	  u += deru[kat];
@@ -1899,26 +1846,7 @@ int agbnp3_der_vp_rooti(AGBNPdata *agb, AGBworkdata *agbw,
 	    u = 0.0;
 	    v = 0.0;
 	    h = 0.0;
-	    for(ii1=0;ii1<order;ii1++){
-	      iats = gatlist[ii1];
-	      for(ii2=ii1+1;ii2<order;ii2++){
-		jats = gatlist[ii2];
-		if(iats<jats){
-		  ia = iats; ja = jats;
-		}else{
-		  ia = jats; ja = iats;
-		}
-		q = mq4[ia][ja];
-		deruij = q2ab[ja]*q/vols[ia];
-		dervij = abrw[ja]*q/vols[ia];
-		q = mq4t[ia][ja];
-		deruji = q2ab[ia]*q/vols[ja];
-		dervji = abrw[ia]*q/vols[ja];
-		u -= (deruij+deruji);
-		v -= (dervij+dervji);
-	      }
-	    }
-	
+
 	    /* these are standard coefficients */
 	    for(ii=0;ii<order;ii++){
 	      kat = gatlist[ii];
