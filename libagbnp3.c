@@ -123,15 +123,9 @@ int agbnp3_new(int *tag, int natoms,
 	      float_i *charge, float_i dielectric_in, float_i dielectric_out,
 	      float_i *igamma, float_i *sgamma,
 	      float_i *ialpha, float_i *salpha,
-	      float_i *idelta, float_i *sdelta,
 	      int *hbtype, float_i *hbcorr,
 	      int nhydrogen, int *ihydrogen, 
-	      int ndummy, int *idummy,
-	      int *isfrozen,
-	      int dopbc, int nsym, int ssize,
-	      float_i *xs, float_i *ys, float_i *zs,
-	      float_i (*rot)[3][3], NeighList *conntbl,
-	      float_i *vdiel_in, int verbose){
+	      NeighList *conntbl, int verbose){
 
   int slot, j, il, i, iat, indx;
   int *iswhat;
@@ -251,8 +245,8 @@ int agbnp3_new(int *tag, int natoms,
     agbdata->sgamma[iat] = sgamma[int2ext[iat]];
     agbdata->ialpha[iat] = ialpha[int2ext[iat]];
     agbdata->salpha[iat] = salpha[int2ext[iat]];
-    agbdata->idelta[iat] = idelta[int2ext[iat]];
-    agbdata->sdelta[iat] = sdelta[int2ext[iat]];
+    agbdata->idelta[iat] = 0.0;
+    agbdata->sdelta[iat] = 0.0;
     agbdata->hbtype[iat] = hbtype[int2ext[iat]];
     agbdata->hbcorr[iat] = hbcorr[int2ext[iat]];
   }
@@ -275,16 +269,7 @@ int agbnp3_new(int *tag, int natoms,
   }
   agbdata->nhydrogen = nhydrogen;
 
-  for(i=0;i<ndummy;i++){
-    iat = ext2int[idummy[i]];
-    if(iswhat[iat]){
-      agbnp3_errprint("agbnp3_new(): hydrogen atom %d cannot be also set as a dummy atom.\n",iat);
-      return AGBNP_ERR;
-    }
-    iswhat[iat] = 3;
-    agbdata->idummy[i] = iat;
-  }
-  agbdata->ndummy = ndummy;
+  agbdata->ndummy = 0;
 
   /* an atom that is not an hydrogen atom or a dummy atom is a heavy atom */
   agbdata->nheavyat = 0;
@@ -298,19 +283,6 @@ int agbnp3_new(int *tag, int natoms,
   /* set dielectric contstants */
   agbdata->dielectric_in = dielectric_in;
   agbdata->dielectric_out = dielectric_out;
-
-  /* set frozen atom flag */
-  if(isfrozen){
-    agbdata->do_frozen = 1;
-    agbnp3_calloc((void **)&(agbdata->isfrozen), natoms*sizeof(int));
-    if(!agbdata->isfrozen){
-      agbnp3_errprint("agbnp3_new(): unable to allocate isfrozen array (%d ints)\n",natoms);
-      return AGBNP_ERR;
-    }
-    for(iat=0;iat<natoms;iat++){
-      agbdata->isfrozen[iat] = isfrozen[int2ext[iat]];
-    }
-  }
 
   /* no neighbor list in agbnp3 for now */
   agbdata->neigh_list = NULL;
@@ -475,7 +447,6 @@ int agbnp3_delete(int tag){
   if(agb->idummy){ agbnp3_free(agb->idummy); agb->idummy = NULL;}
   if(agb->int2ext){ agbnp3_free(agb->int2ext) ; agb->int2ext = NULL;}
   if(agb->ext2int){ agbnp3_free(agb->ext2int) ; agb->ext2int = NULL;}
-  if(agb->isfrozen){ agbnp3_free(agb->isfrozen) ; agb->isfrozen = NULL;}
   if(agb->rot){ agbnp3_free(agb->rot) ; agb->rot = NULL; }
   if(agb->vdiel_in){ agbnp3_free(agb->vdiel_in) ; agb->vdiel_in = NULL;}
 
@@ -621,11 +592,9 @@ int agbnp3_ener(int tag, int init,
   data->idummy = NULL;
   data->int2ext = NULL;
   data->ext2int = NULL;
-  data->isfrozen = NULL;
   data->vdiel_in = NULL;
   data->dielectric_in = data->dielectric_out = -1.0;
   data->neigh_list = data->excl_neigh_list = NULL;
-  data->dopbc = 0;
   data->nsym = 1;
   data->docryst = 0;
   data->ssize = 0;
@@ -963,10 +932,6 @@ int agbnp3_atom_reorder(AGBNPdata *agb, int nhydrogen, int *ihydrogen){
     return AGBNP_ERR;
   }
   nblist_reset_neighbor_list(agbw->near_nl);
-  if(agb->dopbc){
-    /* to store pointers to PBC translation vectors */
-    agbw->near_nl->data = 1;
-  }
   if(nblist_reallocate_neighbor_list(agbw->near_nl, natoms,
 				     natoms*AGBNP_NEARNEIGHBORS) != NBLIST_OK){
       agbnp3_errprint("agbnp3_allocate_agbworkdata(): unable to allocate near_nl neighbor list (natoms=%d, size=%d)\n", natoms, natoms*AGBNP_NEARNEIGHBORS);
@@ -979,10 +944,6 @@ int agbnp3_atom_reorder(AGBNPdata *agb, int nhydrogen, int *ihydrogen){
     return AGBNP_ERR;
   }
   nblist_reset_neighbor_list(agbw->far_nl);
-  if(agb->dopbc){
-    /* to store pointers to PBC translation vectors */
-    agbw->far_nl->data = 1;
-  }
   if(nblist_reallocate_neighbor_list(agbw->far_nl, natoms,
 				     natoms*AGBNP_FARNEIGHBORS) != NBLIST_OK){
       agbnp3_errprint("agbnp3_allocate_agbworkdata(): unable to allocate far_nl neighbor list (natoms=%d, size=%d)\n", natoms, natoms*AGBNP_FARNEIGHBORS);

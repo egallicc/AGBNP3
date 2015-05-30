@@ -27,6 +27,10 @@
 #ifndef AGBNP3_H
 #define AGBNP3_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "libnblist.h"
 
 #ifndef FALSE
@@ -81,15 +85,9 @@ int agbnp3_new(int *tag, int natoms,
 	      float_i *charge, float_i dielectric_in, float_i dielectric_out,
 	      float_i *igamma, float_i *sgamma,
 	      float_i *ialpha, float_i *salpha,
-	      float_i *idelta, float_i *sdelta,
 	      int *hbtype, float_i *hbcorr,
 	      int nhydrogen, int *ihydrogen, 
-	      int ndummy, int *idummy,
-	      int *isfrozen,
-	      int dopbc, int nsym, int ssize,
-              float_i *xs, float_i *ys, float_i *zs,
-	      float_i (*rot)[3][3], NeighList *conntbl,
-	      float_i *vdiel_in, int verbose);
+	      NeighList *conntbl, int verbose);
 
 /* deletes a AGBNP object */
 int agbnp3_delete(int tag);
@@ -105,4 +103,10 @@ int agbnp3_ener(int tag, int init,
 		float_i *ecav, float_i *ecorr_cav, float_i (*decav)[3],
 		float_i *ehb,  float_i (*dehb)[3]);
 
+
+
+#ifdef __cplusplus
+}
 #endif
+
+#endif //AGBNP3_H
