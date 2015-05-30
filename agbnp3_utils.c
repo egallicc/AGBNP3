@@ -732,7 +732,7 @@ HTable *agbnp3_h_create(int nat, int size, int jump){
 #pragma omp critical
   ht->key =  (int *)malloc(size*sizeof(int));
   if(!ht->key){
-    h_delete(ht);
+    agbnp3_h_delete(ht);
     ht = NULL;
     return ht;
   }
@@ -741,8 +741,8 @@ HTable *agbnp3_h_create(int nat, int size, int jump){
 
 void agbnp3_h_delete(HTable *ht){
   if(ht){
-    if(ht->key) agbnp2_free(ht->key);
-    agbnp2_free(ht);
+    if(ht->key) agbnp3_free(ht->key);
+    agbnp3_free(ht);
   }
 }
 

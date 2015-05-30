@@ -732,18 +732,11 @@ int agbnp3_cavity_dersgb_rooti(AGBNPdata *agb, AGBworkdata *agbw,
 			float_a *x, float_a *y, float_a *z);
 
 unsigned int two2n_size(unsigned int m);
-HTable *h_create(int nat, int size, int jump);
-void h_delete(HTable *ht);
-void h_init(HTable *ht);
-int h_enter(HTable *ht, unsigned int i, unsigned int j);
-int h_find(HTable *ht, unsigned int i, unsigned int j);
-
-GHTable *gh_create(int nat, int *size, int jump);
-void gh_delete(GHTable *ght);
-void gh_init(GHTable *ght);
-int gh_enter(GHTable *ght, unsigned int i, unsigned int j);
-int gh_find(GHTable *ght, unsigned int i, unsigned int j);
-int gh_reallocate(GHTable *ght, int *size);
+HTable *agbnp3_h_create(int nat, int size, int jump);
+void agbnp3_h_delete(HTable *ht);
+void agbnp3_h_init(HTable *ht);
+int agbnp3_h_enter(HTable *ht, unsigned int key);
+int agbnp3_h_find(HTable *ht, unsigned int key);
 
 int agbnp3_fcompare( const void *val1, const void *val2 );
 void agbnp3_fsortindx( int pnval, float_a *val, int *indx );
