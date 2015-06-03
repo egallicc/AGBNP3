@@ -31,7 +31,7 @@
 extern "C" {
 #endif
 
-#include "libnblist.h"
+#include "nblist.h"
 
 #ifndef FALSE
 #define FALSE 0

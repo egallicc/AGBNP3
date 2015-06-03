@@ -35,7 +35,7 @@
 #endif
 
 #include "agbnp3.h"
-#include "libnblist.h"
+#include "nblist.h"
 #include "agbnp3_private.h"
 
 #ifdef USE_SSE

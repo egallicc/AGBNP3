@@ -8,8 +8,8 @@ CXX = g++
 F77 = gfortran -std=gnu -cpp
 F90 = gfortran -std=gnu -cpp
 FPP = gfortran -std=gnu -E -cpp
-SHARED_LINKER = $(CXX)
-CXX_SHARED_LINKER = $(CXX)
+SHARED_LINKER = $(CXX) -shared
+CXX_SHARED_LINKER = $(CXX) -shared
 MACH_CandCXXFLAGS = -fPIC -c -DLINUX -DLINUX_X86_64 -DBIND_ -DLESSTIF -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -DGFORTRAN
 MACH_COPT = -O3
 MACH_COPT_SAFE = -O2

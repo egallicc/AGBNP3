@@ -20,7 +20,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "libnblist.h"
+#include "nblist.h"
 
 /*                                                                   *
  * a simple interface to create/reallocate a Verlet neighbor list    *
