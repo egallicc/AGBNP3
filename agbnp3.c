@@ -111,7 +111,7 @@ void agbnp3_terminate( void ){
   }
 
   /* free list of allocated lists */
-  agbnp3_free(agbdata3_list);
+  free(agbdata3_list);
   agbdata3_list = NULL;
   agbdata3_allocated = 0;
   agbdata3_used = 0;
@@ -177,16 +177,16 @@ int agbnp3_new(int *tag, int natoms,
 
   /* sets int2ext and ext2int atomic index mapping arrays */
   /* atomic indexes mapping */
-  agbnp3_calloc((void **)&(agbdata->int2ext), natoms*sizeof(int));
-  agbnp3_calloc((void **)&(agbdata->ext2int), natoms*sizeof(int));
+  agbnp3_vcalloc((void **)&(agbdata->int2ext), natoms*sizeof(int));
+  agbnp3_vcalloc((void **)&(agbdata->ext2int), natoms*sizeof(int));
   agbnp3_atom_reorder(agbdata, nhydrogen, ihydrogen); 
   int2ext = agbdata->int2ext;
   ext2int = agbdata->ext2int;
 
   /* allocates and set coordinates */
-  agbnp3_calloc((void **)&(agbdata->x), natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbdata->y), natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbdata->z), natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbdata->x), natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbdata->y), natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbdata->z), natoms*sizeof(float_a));
   if(!(agbdata->x && agbdata->y && agbdata->z)){
     agbnp3_errprint("agbnp3_new(): error allocating memory for coordinates (%d doubles)\n",3*natoms);
     return AGBNP_ERR;
@@ -201,7 +201,7 @@ int agbnp3_new(int *tag, int natoms,
   agbdata->verbose = verbose;
 
   /* allocates and set radii */
-  agbnp3_calloc((void **)&(agbdata->r),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbdata->r),natoms*sizeof(float_a));
   if(!(agbdata->r)){
      agbnp3_errprint("agbnp3_new(): error allocating memory for atomic radii (%d doubles)\n",2*natoms);
     return AGBNP_ERR;
@@ -211,7 +211,7 @@ int agbnp3_new(int *tag, int natoms,
   }
 
   /* allocates and set charges */
-  agbnp3_calloc((void **)&(agbdata->charge), natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbdata->charge), natoms*sizeof(float_a));
   if(!agbdata->charge){
      agbnp3_errprint("agbnp3_new(): error allocating memory for atomic partial charges (%d doubles)\n",natoms);
     return AGBNP_ERR;
@@ -221,20 +221,20 @@ int agbnp3_new(int *tag, int natoms,
   }
 
   /* allocates and set np parameters */
-  agbnp3_calloc((void **)&(agbdata->igamma), natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbdata->sgamma), natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbdata->ialpha), natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbdata->salpha), natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbdata->idelta), natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbdata->sdelta), natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbdata->igamma), natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbdata->sgamma), natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbdata->ialpha), natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbdata->salpha), natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbdata->idelta), natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbdata->sdelta), natoms*sizeof(float_a));
   if(!(agbdata->igamma && agbdata->sgamma && agbdata->ialpha &&
        agbdata->salpha && agbdata->idelta && agbdata->sdelta)){
     agbnp3_errprint("agbnp3_new(): error allocating memory for non-polar parameters (%d doubles)\n",6*natoms);
     return AGBNP_ERR;
   }
 
-  agbnp3_calloc((void **)&(agbdata->hbtype), natoms*sizeof(int));
-  agbnp3_calloc((void **)&(agbdata->hbcorr), natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbdata->hbtype), natoms*sizeof(int));
+  agbnp3_vcalloc((void **)&(agbdata->hbcorr), natoms*sizeof(float_a));
   if(!(agbdata->hbtype && agbdata->hbcorr)){
     agbnp3_errprint("agbnp3_new(): error allocating memory for non-polar parameters\n");
     return AGBNP_ERR;
@@ -253,10 +253,10 @@ int agbnp3_new(int *tag, int natoms,
 
   /* allocates and set list of hydrogens, heavy atoms and dummy atoms */
   /* iswhat: 1 = heavy atom, 2 = hydrogen,  3 = dummy */
-  agbnp3_calloc((void **)&(iswhat), natoms*sizeof(int));
-  agbnp3_calloc((void **)&(agbdata->iheavyat), natoms*sizeof(int));
-  agbnp3_calloc((void **)&(agbdata->ihydrogen), natoms*sizeof(int));
-  agbnp3_calloc((void **)&(agbdata->idummy), natoms*sizeof(int));
+  agbnp3_vcalloc((void **)&(iswhat), natoms*sizeof(int));
+  agbnp3_vcalloc((void **)&(agbdata->iheavyat), natoms*sizeof(int));
+  agbnp3_vcalloc((void **)&(agbdata->ihydrogen), natoms*sizeof(int));
+  agbnp3_vcalloc((void **)&(agbdata->idummy), natoms*sizeof(int));
   if(!(iswhat && agbdata->iheavyat && agbdata->ihydrogen && agbdata->idummy)){
     agbnp3_errprint("agbnp3_new(): error allocating memory for lists of hydrogens, heavy atoms and dummy atoms (%d integers)\n",4*natoms);
     return AGBNP_ERR;
@@ -278,7 +278,7 @@ int agbnp3_new(int *tag, int natoms,
       agbdata->iheavyat[agbdata->nheavyat++] = iat;
     }
   }
-  agbnp3_free(iswhat);
+  agbnp3_vfree(iswhat);
 
   /* set dielectric contstants */
   agbdata->dielectric_in = dielectric_in;
@@ -294,7 +294,7 @@ int agbnp3_new(int *tag, int natoms,
     return AGBNP_ERR;
   }
   agbdata->do_w = 1;
-  agbnp3_calloc((void **)&(agbdata->conntbl),sizeof(NeighList));
+  agbdata->conntbl = (NeighList *)calloc(1, sizeof(NeighList));
   nblist_reset_neighbor_list(agbdata->conntbl);
   if(nblist_reallocate_neighbor_list(agbdata->conntbl,conntbl->natoms,
 				     conntbl->neighl_size) != NBLIST_OK){
@@ -332,15 +332,15 @@ int agbnp3_new(int *tag, int natoms,
 #endif
 
   /* allocates Born radii, etc, buffers */
-  agbnp3_calloc((void **)&(agbdata->br),natoms*sizeof(float_i));
-  agbnp3_calloc((void **)&(agbdata->sp),natoms*sizeof(float_i));
-  agbnp3_calloc((void **)&(agbdata->surf_area),natoms*sizeof(float_i));
+  agbnp3_vcalloc((void **)&(agbdata->br),natoms*sizeof(float_i));
+  agbnp3_vcalloc((void **)&(agbdata->sp),natoms*sizeof(float_i));
+  agbnp3_vcalloc((void **)&(agbdata->surf_area),natoms*sizeof(float_i));
 
   /* allocates gradient buffers */
-  agbnp3_calloc((void **)&(agbdata->dgbdr),natoms*sizeof(float_i [3]));
-  agbnp3_calloc((void **)&(agbdata->dvwdr),natoms*sizeof(float_i [3]));
-  agbnp3_calloc((void **)&(agbdata->dehb),natoms*sizeof(float_i [3]));
-  agbnp3_calloc((void **)&(agbdata->decav),natoms*sizeof(float_i [3]));
+  agbnp3_vcalloc((void **)&(agbdata->dgbdr),natoms*sizeof(float_i [3]));
+  agbnp3_vcalloc((void **)&(agbdata->dvwdr),natoms*sizeof(float_i [3]));
+  agbnp3_vcalloc((void **)&(agbdata->dehb),natoms*sizeof(float_i [3]));
+  agbnp3_vcalloc((void **)&(agbdata->decav),natoms*sizeof(float_i [3]));
 
   /* initializes lookup table version of i4 */
   if(agbnp3_init_i4p(agbdata) != AGBNP_OK){
@@ -349,7 +349,7 @@ int agbnp3_new(int *tag, int natoms,
   }
 
   /* allocates work arrays */
-  agbnp3_calloc((void **)&(agbdata->agbw),sizeof(AGBworkdata));
+  agbdata->agbw = (AGBworkdata *)calloc(1, sizeof(AGBworkdata));
   if(!agbdata->agbw){
     agbnp3_errprint("agbnp3_new(): error allocating memory for AGB work data structure.\n");
     return AGBNP_ERR;
@@ -375,7 +375,7 @@ int agbnp3_new(int *tag, int natoms,
       printf("\n agbnp3_new(): info: using %5d OpenMP thread(s).\n\n",
 	     agbdata->nprocs);  
       /* array of pointers to thread memory work spaces */ 
-      agbnp3_calloc((void **)&(agbdata->agbw_p),agbdata->nprocs*sizeof(AGBworkdata));
+      agbdata->agbw_p = (AGBworkdata **)calloc(agbdata->nprocs, sizeof(AGBworkdata *));
       /* creates and initializes atomic locks */
       agbdata->omplock = (omp_lock_t *)malloc(agbdata->natoms*sizeof(omp_lock_t));
       for(iat=0;iat<natoms;iat++){
@@ -385,7 +385,7 @@ int agbnp3_new(int *tag, int natoms,
 #pragma omp critical
     {
       /* allocates and initializes work space for this thread */
-      agbnp3_calloc((void **)&(agbdata->agbw_p[iproc]), sizeof(AGBworkdata));
+      agbdata->agbw_p[iproc] = (AGBworkdata *)calloc(1, sizeof(AGBworkdata));
       if(!agbdata->agbw_p[iproc]){
 	agbnp3_errprint("agbnp3_new(): error allocating memory for AGB work data structure.\n");
 	error = 1;
@@ -404,6 +404,8 @@ int agbnp3_new(int *tag, int natoms,
     return AGBNP_ERR;
   }
 #endif /* _OPENMP */
+
+  printf("agbnp3_new(): 9\n");
 
   /* set in_use=TRUE */
   agbdata->in_use = TRUE;
@@ -429,31 +431,31 @@ int agbnp3_delete(int tag){
   /* pointer to agb data structure */
   agb = &(agbdata3_list[tag]);
 
-  if(agb->x){ agbnp3_free(agb->x); agb->x = NULL;}
-  if(agb->y){ agbnp3_free(agb->y); agb->y = NULL;}
-  if(agb->z){ agbnp3_free(agb->z); agb->z = NULL;}
-  if(agb->r){ agbnp3_free(agb->r); agb->r = NULL;}
-  if(agb->charge){ agbnp3_free(agb->charge); agb->charge = NULL;}
-  if(agb->igamma){ agbnp3_free(agb->igamma); agb->igamma = NULL;}
-  if(agb->sgamma){ agbnp3_free(agb->sgamma); agb->sgamma = NULL;}
-  if(agb->ialpha){ agbnp3_free(agb->ialpha); agb->ialpha = NULL;}
-  if(agb->salpha){ agbnp3_free(agb->salpha); agb->salpha = NULL;}
-  if(agb->idelta){ agbnp3_free(agb->idelta); agb->idelta = NULL;}
-  if(agb->sdelta){ agbnp3_free(agb->sdelta); agb->sdelta = NULL;}
-  if(agb->hbtype){ agbnp3_free(agb->hbtype); agb->hbtype = NULL;}
-  if(agb->hbcorr){ agbnp3_free(agb->hbcorr); agb->hbcorr = NULL;}
-  if(agb->iheavyat){ agbnp3_free(agb->iheavyat); agb->iheavyat = NULL;}
-  if(agb->ihydrogen){ agbnp3_free(agb->ihydrogen); agb->ihydrogen = NULL;}
-  if(agb->idummy){ agbnp3_free(agb->idummy); agb->idummy = NULL;}
-  if(agb->int2ext){ agbnp3_free(agb->int2ext) ; agb->int2ext = NULL;}
-  if(agb->ext2int){ agbnp3_free(agb->ext2int) ; agb->ext2int = NULL;}
-  if(agb->rot){ agbnp3_free(agb->rot) ; agb->rot = NULL; }
-  if(agb->vdiel_in){ agbnp3_free(agb->vdiel_in) ; agb->vdiel_in = NULL;}
+  if(agb->x){ agbnp3_vfree(agb->x); agb->x = NULL;}
+  if(agb->y){ agbnp3_vfree(agb->y); agb->y = NULL;}
+  if(agb->z){ agbnp3_vfree(agb->z); agb->z = NULL;}
+  if(agb->r){ agbnp3_vfree(agb->r); agb->r = NULL;}
+  if(agb->charge){ agbnp3_vfree(agb->charge); agb->charge = NULL;}
+  if(agb->igamma){ agbnp3_vfree(agb->igamma); agb->igamma = NULL;}
+  if(agb->sgamma){ agbnp3_vfree(agb->sgamma); agb->sgamma = NULL;}
+  if(agb->ialpha){ agbnp3_vfree(agb->ialpha); agb->ialpha = NULL;}
+  if(agb->salpha){ agbnp3_vfree(agb->salpha); agb->salpha = NULL;}
+  if(agb->idelta){ agbnp3_vfree(agb->idelta); agb->idelta = NULL;}
+  if(agb->sdelta){ agbnp3_vfree(agb->sdelta); agb->sdelta = NULL;}
+  if(agb->hbtype){ agbnp3_vfree(agb->hbtype); agb->hbtype = NULL;}
+  if(agb->hbcorr){ agbnp3_vfree(agb->hbcorr); agb->hbcorr = NULL;}
+  if(agb->iheavyat){ agbnp3_vfree(agb->iheavyat); agb->iheavyat = NULL;}
+  if(agb->ihydrogen){ agbnp3_vfree(agb->ihydrogen); agb->ihydrogen = NULL;}
+  if(agb->idummy){ agbnp3_vfree(agb->idummy); agb->idummy = NULL;}
+  if(agb->int2ext){ agbnp3_vfree(agb->int2ext) ; agb->int2ext = NULL;}
+  if(agb->ext2int){ agbnp3_vfree(agb->ext2int) ; agb->ext2int = NULL;}
+  if(agb->rot){ agbnp3_vfree(agb->rot) ; agb->rot = NULL; }
+  if(agb->vdiel_in){ agbnp3_vfree(agb->vdiel_in) ; agb->vdiel_in = NULL;}
 
   if(agb->agbw){
-    agbnp3_delete_agbworkdata(agb->agbw); agbnp3_free(agb->agbw) ; agb->agbw = NULL;}
+    agbnp3_delete_agbworkdata(agb->agbw); free(agb->agbw) ; agb->agbw = NULL;}
   if(agb->conntbl){
-    nblist_delete_neighbor_list(agb->conntbl); agbnp3_free(agb->conntbl) ; agb->conntbl = NULL; }
+    nblist_delete_neighbor_list(agb->conntbl); free(agb->conntbl) ; agb->conntbl = NULL; }
 
 #ifdef _OPENMP
   if(agb->nprocs > 0){
@@ -465,7 +467,7 @@ int agbnp3_delete(int tag){
 	}
 	agb->agbw_p[iproc] = NULL;
       }
-      agbnp3_free(agb->agbw_p); agb->agbw_p = NULL;
+      free(agb->agbw_p); agb->agbw_p = NULL;
     }
   }
   if(agb->omplock) { 
@@ -473,7 +475,7 @@ int agbnp3_delete(int tag){
     for(iat=0;iat<agb->natoms;iat++){
       omp_destroy_lock(&(agb->omplock[iat]));
     }
-    agbnp3_free(agb->omplock); agb->omplock = NULL; 
+    free(agb->omplock); agb->omplock = NULL; 
   }
 #endif
 
@@ -605,9 +607,6 @@ int agbnp3_ener(int tag, int init,
   data->agbw = NULL;
   data->nprocs = data->maxprocs = 0;
   data->agbw_p = NULL;
-  data->doalt = 0;
-  data->alt_site = NULL;
-  data->alt_id = NULL;
   data->f4c1table2d = NULL;
   data->f4c1table2dh = NULL;
   return AGBNP_OK;
@@ -624,25 +623,14 @@ int agbnp3_ener(int tag, int init,
   agbw->isheavy = NULL;
   agbw->nbiat = NULL;
   agbw->nbdata = NULL;
-  agbw->xj = agbw->yj = agbw->zj = NULL;
   agbw->br = agbw->br1 = agbw->brw = NULL;
   agbw->alpha = agbw->delta = NULL;
   agbw->galpha = agbw->gprefac = NULL;
   agbw->atm_gs = NULL;
   agbw->sp = NULL;
-  agbw->isvfrozen = NULL;
-  agbw->isvvfrozen = NULL;
-  agbw->isbfrozen = NULL;
-  agbw->volumep_constant = NULL;
-  agbw->br1_const = NULL;
-  agbw->gbpair_const = NULL;
-  agbw->dera_const = agbw->deru_c = agbw->derv_c = NULL;
+
   agbw->nq4cache = 0;
   agbw->q4cache = NULL;
-  agbw->nv2cache = 0;
-  agbw->v2cache = NULL;
-  agbw->novfcache = 0;
-  agbw->ovfcache = NULL;
   agbw->near_nl = NULL;
   agbw->far_nl = NULL;
 
@@ -653,35 +641,19 @@ int agbnp3_ener(int tag, int init,
   agbw->dgbdr_h = NULL;
   agbw->dvwdr_h = NULL;
   agbw->dehb = NULL;
-  agbw->dgbdr_c = NULL;
-  agbw->dvwdr_c = NULL;
 
   agbw->surf_area = agbw->surf_area_f = NULL;
   agbw->gamma = agbw->gammap = NULL;
-  agbw->surfarea_constant = NULL;
   agbw->decav_h = NULL;
-  agbw->decav_const = NULL;
 
   agbw->nlist = NULL;
   agbw->js = NULL;
   agbw->pbcs = NULL;
   agbw->datas = NULL;
 
-  /* pair volume corrections */
-  agbw->mvpji = NULL;
-
-  /* pair Q4 integrals */
-  agbw->mq4 = NULL;  // upper triangular half
-  agbw->mq4t = NULL; // transposed lower triangular half
-  // mq4[i][j] contribution of i to Born radius of j (i<j)
-  // mq4t[i][j] contribution of j to Born radius of i (i<j)
-
-
   agbw->nwsat = 0;
   agbw->wsat_size = 0;
   agbw->wsat = NULL;
-
-  agbw->vdieli2_in = NULL;
 
   for(i=0;i<2;i++){
     agbw->overlap_lists[i] = NULL;
@@ -808,118 +780,75 @@ int agbnp3_atom_reorder(AGBNPdata *agb, int nhydrogen, int *ihydrogen){
    int i, n;
   agbw->natoms = natoms;
 
-  agbnp3_calloc((void **)&(agbw->vols),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->volumep),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->vols),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->volumep),natoms*sizeof(float_a));
 
-  agbnp3_calloc((void **)&(agbw->dera),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->deru),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->derv),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->derh),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->dera),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->deru),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->derv),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->derh),natoms*sizeof(float_a));
 
-  agbnp3_calloc((void **)&(agbw->derus),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->dervs),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->psvol),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->q2ab),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->abrw),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->derus),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->dervs),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->psvol),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->q2ab),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->abrw),natoms*sizeof(float_a));
 
-  agbnp3_calloc((void **)&(agbw->br1_swf_der),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->isheavy),natoms*sizeof(int));
-  agbnp3_calloc((void **)&(agbw->nbiat),natoms*sizeof(int));
-  agbnp3_calloc((void **)&(agbw->nbdata),natoms*sizeof(void *));
+  agbnp3_vcalloc((void **)&(agbw->br1_swf_der),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->isheavy),natoms*sizeof(int));
+  agbnp3_vcalloc((void **)&(agbw->nbiat),natoms*sizeof(int));
 
-  agbnp3_calloc((void **)&(agbw->xj),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->yj),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->zj),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->br),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->br1),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->brw),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->br),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->br1),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->brw),natoms*sizeof(float_a));
 
-  agbnp3_calloc((void **)&(agbw->alpha),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->delta),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->galpha),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->gprefac),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->alpha),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->delta),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->galpha),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->gprefac),natoms*sizeof(float_a));
 
-  agbnp3_calloc((void **)&(agbw->atm_gs),natoms*sizeof(GParm));
+  agbnp3_vcalloc((void **)&(agbw->atm_gs),natoms*sizeof(GParm));
 
-  agbnp3_calloc((void **)&(agbw->sp),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->spe),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->sp),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->spe),natoms*sizeof(float_a));
 
-  agbnp3_calloc((void **)&(agbw->isvfrozen),natoms*sizeof(int));
-  agbnp3_calloc((void **)&(agbw->isvvfrozen),natoms*sizeof(int));
-  agbnp3_calloc((void **)&(agbw->isbfrozen),natoms*sizeof(int));
+  agbnp3_vcalloc((void **)&(agbw->dgbdrx),natoms*sizeof(float));
+  agbnp3_vcalloc((void **)&(agbw->dgbdry),natoms*sizeof(float));
+  agbnp3_vcalloc((void **)&(agbw->dgbdrz),natoms*sizeof(float));
 
-  agbnp3_calloc((void **)&(agbw->volumep_constant),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->br1_const),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->gbpair_const),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->dera_const),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->deru_c),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->derv_c),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->dgbdr_h),natoms*sizeof(float_a [3]));
+  agbnp3_vcalloc((void **)&(agbw->dvwdr_h),natoms*sizeof(float_a [3]));
+  agbnp3_vcalloc((void **)&(agbw->dehb),natoms*sizeof(float_a [3]));
+  agbnp3_vcalloc((void **)&(agbw->decav_h),natoms*sizeof(float_a [3]));
 
-  agbnp3_calloc((void **)&(agbw->dgbdrx),natoms*sizeof(float));
-  agbnp3_calloc((void **)&(agbw->dgbdry),natoms*sizeof(float));
-  agbnp3_calloc((void **)&(agbw->dgbdrz),natoms*sizeof(float));
+  agbnp3_vcalloc((void **)&(agbw->nlist),natoms*sizeof(int));
+  agbnp3_vcalloc((void **)&(agbw->js),natoms*sizeof(int));
 
-  agbnp3_calloc((void **)&(agbw->dgbdr_h),natoms*sizeof(float_a [3]));
-  agbnp3_calloc((void **)&(agbw->dvwdr_h),natoms*sizeof(float_a [3]));
-  agbnp3_calloc((void **)&(agbw->dehb),natoms*sizeof(float_a [3]));
-  agbnp3_calloc((void **)&(agbw->dgbdr_c),natoms*sizeof(float_a [3]));
-  agbnp3_calloc((void **)&(agbw->dvwdr_c),natoms*sizeof(float_a [3]));
+  agbnp3_vcalloc((void **)&(agbw->datas),natoms*sizeof(void *));
 
-  agbnp3_calloc((void **)&(agbw->nlist),natoms*sizeof(int));
-  agbnp3_calloc((void **)&(agbw->js),natoms*sizeof(int));
+  agbnp3_vcalloc((void **)&(agbw->surf_area),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->surf_area_f),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->gamma),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->gammap),natoms*sizeof(float_a));
 
-  agbnp3_calloc((void **)&(agbw->datas),natoms*sizeof(void *));
-
-  agbnp3_calloc((void **)&(agbw->surf_area),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->surf_area_f),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->surfarea_constant),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->gamma),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->gammap),natoms*sizeof(float_a));
-
-  agbnp3_calloc((void **)&(agbw->decav_h),natoms*sizeof(float_a [3]));
-  agbnp3_calloc((void **)&(agbw->decav_const),natoms*sizeof(float_a [3]));
-
-  agbnp3_calloc((void **)&(agbw->mvpji),natoms*sizeof(float *));
-  for(i=0;i<natoms;i++){
-    agbnp3_calloc((void **)&(agbw->mvpji[i]),natoms*sizeof(float));
-  }
-
-  agbnp3_calloc((void **)&(agbw->mq4),natoms*sizeof(float *));
-  for(i=0;i<natoms;i++){
-    agbnp3_calloc((void **)&(agbw->mq4[i]),natoms*sizeof(float));
-  }
-
-  agbnp3_calloc((void **)&(agbw->mq4t),natoms*sizeof(float *));
-  for(i=0;i<natoms;i++){
-    agbnp3_calloc((void **)&(agbw->mq4t[i]),natoms*sizeof(float));
-  }
-
-  agbnp3_calloc((void **)&(agbw->nl_r2v),natoms*sizeof(float_a));
-  agbnp3_calloc((void **)&(agbw->nl_indx),natoms*sizeof(int));
+  agbnp3_vcalloc((void **)&(agbw->nl_r2v),natoms*sizeof(float_a));
+  agbnp3_vcalloc((void **)&(agbw->nl_indx),natoms*sizeof(int));
 
   if(!(agbw->vols && agbw->volumep && agbw->dera && agbw->deru && 
        agbw->derv && agbw->derh &&
        agbw->derus && agbw->dervs && agbw->psvol && 
        agbw->q2ab  && agbw->abrw  && agbw->br1_swf_der && 
-       agbw->isheavy && agbw->nbiat && agbw->nbdata && 
-       agbw->xj && agbw->yj && agbw->zj &&
+       agbw->isheavy && agbw->nbiat && 
        agbw->br && agbw->br1 && agbw->brw  && 
        agbw->alpha && agbw->delta && agbw->galpha && agbw->gprefac &&
        agbw->atm_gs &&
-       agbw->sp && agbw->spe && agbw->isvfrozen && agbw->isvvfrozen && 
-       agbw->isbfrozen && 
-       agbw->volumep_constant && 
-       agbw->br1_const && agbw->gbpair_const &&  agbw->dera_const &&
-       agbw->deru_c && agbw->derv_c &&
+       agbw->sp && agbw->spe &&
        agbw->dgbdrx && agbw->dgbdry && agbw->dgbdrz && 
        agbw->dgbdr_h && agbw->dvwdr_h && 
        agbw->dehb &&
-       agbw->dgbdr_c && agbw->dvwdr_c &&
-       agbw->surf_area && agbw->surf_area_f && agbw->surfarea_constant &&
-       agbw->gamma && agbw->gammap && agbw->decav_h && agbw->decav_const &&
+       agbw->surf_area && agbw->surf_area_f &&
+       agbw->gamma && agbw->gammap && agbw->decav_h && 
        agbw->nlist && agbw->js && agbw->datas && 
-       agbw->mvpji &&
-       agbw->mq4 && agbw->mq4t &&
        agbw->nl_r2v && agbw->nl_indx 
        )){
     agbnp3_errprint( "agbnp3_allocate_agbworkdata(): unable to allocate memory for AGB work data structure.\n");
@@ -985,71 +914,51 @@ int agbnp3_atom_reorder(AGBNPdata *agb, int nhydrogen, int *ihydrogen){
 
  int agbnp3_delete_agbworkdata(AGBworkdata *agbw){
   int i;
-  if(agbw->vols){ agbnp3_free(agbw->vols); agbw->vols = NULL;}
-  if(agbw->volumep){agbnp3_free(agbw->volumep); agbw->volumep = NULL;}
-  if(agbw->dera){ agbnp3_free(agbw->dera); agbw->dera = NULL;}
-  if(agbw->deru){ agbnp3_free(agbw->deru); agbw->deru = NULL;}
-  if(agbw->derv){ agbnp3_free(agbw->derv); agbw->derv = NULL;}
-  if(agbw->derh){ agbnp3_free(agbw->derh); agbw->derh = NULL;}
-  if(agbw->psvol){ agbnp3_free(agbw->psvol); agbw->psvol = NULL;}
-  if(agbw->derus){ agbnp3_free(agbw->derus); agbw->derus = NULL;}
-  if(agbw->dervs){ agbnp3_free(agbw->dervs); agbw->dervs = NULL;}
-  if(agbw->q2ab){ agbnp3_free(agbw->q2ab); agbw->q2ab = NULL;}
-  if(agbw->abrw){ agbnp3_free(agbw->abrw); agbw->abrw = NULL;}
-  if(agbw->br1_swf_der){agbnp3_free(agbw->br1_swf_der); agbw->br1_swf_der = NULL;}
-  if(agbw->isheavy){agbnp3_free(agbw->isheavy); agbw->isheavy = NULL;}
-  if(agbw->nbiat){agbnp3_free(agbw->nbiat); agbw->nbiat = NULL;}
-  if(agbw->nbdata){agbnp3_free(agbw->nbdata); agbw->nbdata = NULL;}
-  if(agbw->xj){agbnp3_free(agbw->xj); agbw->xj = NULL;}
-  if(agbw->yj){agbnp3_free(agbw->yj); agbw->yj = NULL;}
-  if(agbw->zj){agbnp3_free(agbw->zj); agbw->zj = NULL;}
-  if(agbw->br){agbnp3_free(agbw->br); agbw->br = NULL;}
-  if(agbw->br1){agbnp3_free(agbw->br1); agbw->br1 = NULL;}
-  if(agbw->brw){agbnp3_free(agbw->brw); agbw->brw = NULL;}
-  if(agbw->alpha){agbnp3_free(agbw->alpha); agbw->alpha = NULL;}
-  if(agbw->delta){agbnp3_free(agbw->delta); agbw->delta = NULL;}
-  if(agbw->galpha){agbnp3_free(agbw->galpha); agbw->galpha = NULL;}
-  if(agbw->gprefac){agbnp3_free(agbw->gprefac); agbw->gprefac = NULL;}
-  if(agbw->atm_gs){agbnp3_free(agbw->atm_gs); agbw->atm_gs = NULL;}
-  if(agbw->sp){agbnp3_free(agbw->sp); agbw->sp = NULL;}
-  if(agbw->spe){agbnp3_free(agbw->spe); agbw->spe = NULL;}
-  if(agbw->isvfrozen){agbnp3_free(agbw->isvfrozen); agbw->isvfrozen = NULL;}
-  if(agbw->isvvfrozen){agbnp3_free(agbw->isvvfrozen); agbw->isvvfrozen = NULL;}
-  if(agbw->isbfrozen){agbnp3_free(agbw->isbfrozen); agbw->isbfrozen = NULL;}
-  if(agbw->volumep_constant){
-    agbnp3_free(agbw->volumep_constant); agbw->volumep_constant = NULL;}
-  if(agbw->br1_const){agbnp3_free(agbw->br1_const); agbw->br1_const = NULL;}
-  if(agbw->gbpair_const){agbnp3_free(agbw->gbpair_const); agbw->gbpair_const = NULL;}
-  if(agbw->dera_const){agbnp3_free(agbw->dera_const); agbw->dera_const = NULL;}
-  if(agbw->deru_c){agbnp3_free(agbw->deru_c); agbw->deru_c = NULL;}
-  if(agbw->derv_c){agbnp3_free(agbw->derv_c); agbw->derv_c = NULL;}
-  if(agbw->q4cache){agbnp3_free(agbw->q4cache); agbw->q4cache = NULL;}
-  if(agbw->v2cache){agbnp3_free(agbw->v2cache); agbw->v2cache = NULL;}
-  if(agbw->ovfcache){agbnp3_free(agbw->ovfcache); agbw->ovfcache = NULL;}
+  if(agbw->vols){ agbnp3_vfree(agbw->vols); agbw->vols = NULL;}
+  if(agbw->volumep){agbnp3_vfree(agbw->volumep); agbw->volumep = NULL;}
+  if(agbw->dera){ agbnp3_vfree(agbw->dera); agbw->dera = NULL;}
+  if(agbw->deru){ agbnp3_vfree(agbw->deru); agbw->deru = NULL;}
+  if(agbw->derv){ agbnp3_vfree(agbw->derv); agbw->derv = NULL;}
+  if(agbw->derh){ agbnp3_vfree(agbw->derh); agbw->derh = NULL;}
+  if(agbw->psvol){ agbnp3_vfree(agbw->psvol); agbw->psvol = NULL;}
+  if(agbw->derus){ agbnp3_vfree(agbw->derus); agbw->derus = NULL;}
+  if(agbw->dervs){ agbnp3_vfree(agbw->dervs); agbw->dervs = NULL;}
+  if(agbw->q2ab){ agbnp3_vfree(agbw->q2ab); agbw->q2ab = NULL;}
+  if(agbw->abrw){ agbnp3_vfree(agbw->abrw); agbw->abrw = NULL;}
+  if(agbw->br1_swf_der){agbnp3_vfree(agbw->br1_swf_der); agbw->br1_swf_der = NULL;}
+  if(agbw->isheavy){agbnp3_vfree(agbw->isheavy); agbw->isheavy = NULL;}
+  if(agbw->nbiat){agbnp3_vfree(agbw->nbiat); agbw->nbiat = NULL;}
+  if(agbw->br){agbnp3_vfree(agbw->br); agbw->br = NULL;}
+  if(agbw->br1){agbnp3_vfree(agbw->br1); agbw->br1 = NULL;}
+  if(agbw->brw){agbnp3_vfree(agbw->brw); agbw->brw = NULL;}
+  if(agbw->alpha){agbnp3_vfree(agbw->alpha); agbw->alpha = NULL;}
+  if(agbw->delta){agbnp3_vfree(agbw->delta); agbw->delta = NULL;}
+  if(agbw->galpha){agbnp3_vfree(agbw->galpha); agbw->galpha = NULL;}
+  if(agbw->gprefac){agbnp3_vfree(agbw->gprefac); agbw->gprefac = NULL;}
+  if(agbw->atm_gs){agbnp3_vfree(agbw->atm_gs); agbw->atm_gs = NULL;}
+  if(agbw->sp){agbnp3_vfree(agbw->sp); agbw->sp = NULL;}
+  if(agbw->spe){agbnp3_vfree(agbw->spe); agbw->spe = NULL;}
+  if(agbw->q4cache){agbnp3_vfree(agbw->q4cache); agbw->q4cache = NULL;}
 
-  if(agbw->dgbdrx){agbnp3_free(agbw->dgbdrx); agbw->dgbdrx = NULL;}
-  if(agbw->dgbdry){agbnp3_free(agbw->dgbdry); agbw->dgbdry = NULL;}
-  if(agbw->dgbdrz){agbnp3_free(agbw->dgbdrz); agbw->dgbdrz = NULL;}
+  if(agbw->dgbdrx){agbnp3_vfree(agbw->dgbdrx); agbw->dgbdrx = NULL;}
+  if(agbw->dgbdry){agbnp3_vfree(agbw->dgbdry); agbw->dgbdry = NULL;}
+  if(agbw->dgbdrz){agbnp3_vfree(agbw->dgbdrz); agbw->dgbdrz = NULL;}
 
-  if(agbw->dgbdr_h){agbnp3_free(agbw->dgbdr_h); agbw->dgbdr_h = NULL;}
-  if(agbw->dvwdr_h){agbnp3_free(agbw->dvwdr_h); agbw->dvwdr_h = NULL;}
-  if(agbw->dehb){agbnp3_free(agbw->dehb); agbw->dehb = NULL;}
-  if(agbw->dgbdr_c){agbnp3_free(agbw->dgbdr_c); agbw->dgbdr_c = NULL;}
-  if(agbw->dvwdr_c){agbnp3_free(agbw->dvwdr_c); agbw->dvwdr_c = NULL;}
+  if(agbw->dgbdr_h){agbnp3_vfree(agbw->dgbdr_h); agbw->dgbdr_h = NULL;}
+  if(agbw->dvwdr_h){agbnp3_vfree(agbw->dvwdr_h); agbw->dvwdr_h = NULL;}
+  if(agbw->dehb){agbnp3_vfree(agbw->dehb); agbw->dehb = NULL;}
 
 
-  if(agbw->surf_area)  {agbnp3_free(agbw->surf_area);  agbw->surf_area = NULL;}
-  if(agbw->surf_area_f) {agbnp3_free(agbw->surf_area_f); agbw->surf_area_f = NULL;}
-  if(agbw->surfarea_constant) {agbnp3_free(agbw->surfarea_constant);  agbw->surfarea_constant = NULL;}
-  if(agbw->gamma)  {agbnp3_free(agbw->gamma); agbw->gamma = NULL;}
-  if(agbw->gammap) {agbnp3_free(agbw->gammap);  agbw->gammap = NULL;}
-  if(agbw->decav_h)  {agbnp3_free(agbw->decav_h);  agbw->decav_h = NULL;}
-  if(agbw->decav_const)  {agbnp3_free(agbw->decav_const); agbw->decav_const  = NULL;}
+  if(agbw->surf_area)  {agbnp3_vfree(agbw->surf_area);  agbw->surf_area = NULL;}
+  if(agbw->surf_area_f) {agbnp3_vfree(agbw->surf_area_f); agbw->surf_area_f = NULL;}
+  if(agbw->gamma)  {agbnp3_vfree(agbw->gamma); agbw->gamma = NULL;}
+  if(agbw->gammap) {agbnp3_vfree(agbw->gammap);  agbw->gammap = NULL;}
+  if(agbw->decav_h)  {agbnp3_vfree(agbw->decav_h);  agbw->decav_h = NULL;}
 
-  if(agbw->nlist)  {agbnp3_free(agbw->nlist); agbw->nlist  = NULL;}
-  if(agbw->js)  {agbnp3_free(agbw->js); agbw->js  = NULL;}
-  if(agbw->pbcs)  {agbnp3_free(agbw->pbcs); agbw->pbcs  = NULL;}
-  if(agbw->datas)  {agbnp3_free(agbw->datas); agbw->datas  = NULL;}
+  if(agbw->nlist)  {agbnp3_vfree(agbw->nlist); agbw->nlist  = NULL;}
+  if(agbw->js)  {agbnp3_vfree(agbw->js); agbw->js  = NULL;}
+  if(agbw->pbcs)  {agbnp3_vfree(agbw->pbcs); agbw->pbcs  = NULL;}
+  if(agbw->datas)  {agbnp3_vfree(agbw->datas); agbw->datas  = NULL;}
 
   if(agbw->near_nl){
     nblist_delete_neighbor_list(agbw->near_nl);
@@ -1059,25 +968,9 @@ int agbnp3_atom_reorder(AGBNPdata *agb, int nhydrogen, int *ihydrogen){
     nblist_delete_neighbor_list(agbw->far_nl);
     agbw->far_nl = NULL;
   }  
-  
-  if(agbw->mq4) {
-    int i;
-    for(i=0;i<agbw->natoms;i++){
-      if(agbw->mq4[i]) agbnp3_free(agbw->mq4[i]);
-    }
-    agbnp3_free(agbw->mq4); agbw->mq4 = NULL;
-  }
 
-  if(agbw->mq4t) {
-    int i;
-    for(i=0;i<agbw->natoms;i++){
-      if(agbw->mq4t[i]) agbnp3_free(agbw->mq4t[i]);
-    }
-    agbnp3_free(agbw->mq4t); agbw->mq4t = NULL;
-  }
-
-  if(agbw->nl_r2v)  {agbnp3_free(agbw->nl_r2v); agbw->nl_r2v = NULL;}
-  if(agbw->nl_indx) {agbnp3_free(agbw->nl_indx); agbw->nl_indx = NULL;}
+  if(agbw->nl_r2v)  {agbnp3_vfree(agbw->nl_r2v); agbw->nl_r2v = NULL;}
+  if(agbw->nl_indx) {agbnp3_vfree(agbw->nl_indx); agbw->nl_indx = NULL;}
 
   if(agbw->wsat){ 
     int iw;
@@ -1086,79 +979,77 @@ int agbnp3_atom_reorder(AGBNPdata *agb, int nhydrogen, int *ihydrogen){
       wsat = &(agbw->wsat[iw]);
       agbnp3_clr_wsat(wsat);
     }
-    agbnp3_free(agbw->wsat); 
+    free(agbw->wsat); 
     agbw->wsat = NULL;
   }
 
-  if(agbw->vdieli2_in){agbnp3_free(agbw->vdieli2_in); agbw->vdieli2_in = NULL;}
-
   for(i=0;i<2;i++){
-    if(agbw->overlap_lists[i]){agbnp3_free(agbw->overlap_lists[i]); agbw->overlap_lists[i] = NULL;}
-    if(agbw->root_lists[i]){agbnp3_free(agbw->root_lists[i]); agbw->root_lists[i] = NULL;}
+    if(agbw->overlap_lists[i]){agbnp3_vfree(agbw->overlap_lists[i]); agbw->overlap_lists[i] = NULL;}
+    if(agbw->root_lists[i]){agbnp3_vfree(agbw->root_lists[i]); agbw->root_lists[i] = NULL;}
   }
 
-  if(agbw->a1){agbnp3_free(agbw->a1); agbw->a1 = NULL;}
-  if(agbw->p1){agbnp3_free(agbw->p1); agbw->p1 = NULL;}
-  if(agbw->c1x){agbnp3_free(agbw->c1x); agbw->c1x = NULL;}
-  if(agbw->c1y){agbnp3_free(agbw->c1y); agbw->c1y = NULL;}
-  if(agbw->c1z){agbnp3_free(agbw->c1z); agbw->c1z = NULL;}
+  if(agbw->a1){agbnp3_vfree(agbw->a1); agbw->a1 = NULL;}
+  if(agbw->p1){agbnp3_vfree(agbw->p1); agbw->p1 = NULL;}
+  if(agbw->c1x){agbnp3_vfree(agbw->c1x); agbw->c1x = NULL;}
+  if(agbw->c1y){agbnp3_vfree(agbw->c1y); agbw->c1y = NULL;}
+  if(agbw->c1z){agbnp3_vfree(agbw->c1z); agbw->c1z = NULL;}
 
-  if(agbw->a2){agbnp3_free(agbw->a2); agbw->a2 = NULL;}
-  if(agbw->p2){agbnp3_free(agbw->p2); agbw->p2 = NULL;}
-  if(agbw->c2x){agbnp3_free(agbw->c2x); agbw->c2x = NULL;}
-  if(agbw->c2y){agbnp3_free(agbw->c2y); agbw->c2y = NULL;}
-  if(agbw->c2z){agbnp3_free(agbw->c2z); agbw->c2z = NULL;}
+  if(agbw->a2){agbnp3_vfree(agbw->a2); agbw->a2 = NULL;}
+  if(agbw->p2){agbnp3_vfree(agbw->p2); agbw->p2 = NULL;}
+  if(agbw->c2x){agbnp3_vfree(agbw->c2x); agbw->c2x = NULL;}
+  if(agbw->c2y){agbnp3_vfree(agbw->c2y); agbw->c2y = NULL;}
+  if(agbw->c2z){agbnp3_vfree(agbw->c2z); agbw->c2z = NULL;}
 
-  if(agbw->v3){agbnp3_free(agbw->hv3); agbw->v3 = NULL;}
-  if(agbw->v3p){agbnp3_free(agbw->hv3p); agbw->v3p = NULL;}
-  if(agbw->fp3){agbnp3_free(agbw->hfp3); agbw->fp3 = NULL;}
-  if(agbw->fpp3){agbnp3_free(agbw->hfpp3); agbw->fpp3 = NULL;}
+  if(agbw->v3){agbnp3_vfree(agbw->hv3); agbw->v3 = NULL;}
+  if(agbw->v3p){agbnp3_vfree(agbw->hv3p); agbw->v3p = NULL;}
+  if(agbw->fp3){agbnp3_vfree(agbw->hfp3); agbw->fp3 = NULL;}
+  if(agbw->fpp3){agbnp3_vfree(agbw->hfpp3); agbw->fpp3 = NULL;}
 
-  if(agbw->hiat){agbnp3_free(agbw->hiat); agbw->hiat = NULL;}
-  if(agbw->ha1){agbnp3_free(agbw->ha1); agbw->ha1 = NULL;}
-  if(agbw->hp1){agbnp3_free(agbw->hp1); agbw->hp1 = NULL;}
-  if(agbw->hc1x){agbnp3_free(agbw->hc1x); agbw->hc1x = NULL;}
-  if(agbw->hc1y){agbnp3_free(agbw->hc1y); agbw->hc1y = NULL;}
-  if(agbw->hc1z){agbnp3_free(agbw->hc1z); agbw->hc1z = NULL;}
+  if(agbw->hiat){agbnp3_vfree(agbw->hiat); agbw->hiat = NULL;}
+  if(agbw->ha1){agbnp3_vfree(agbw->ha1); agbw->ha1 = NULL;}
+  if(agbw->hp1){agbnp3_vfree(agbw->hp1); agbw->hp1 = NULL;}
+  if(agbw->hc1x){agbnp3_vfree(agbw->hc1x); agbw->hc1x = NULL;}
+  if(agbw->hc1y){agbnp3_vfree(agbw->hc1y); agbw->hc1y = NULL;}
+  if(agbw->hc1z){agbnp3_vfree(agbw->hc1z); agbw->hc1z = NULL;}
 
-  if(agbw->ha2){agbnp3_free(agbw->ha2); agbw->ha2 = NULL;}
-  if(agbw->hp2){agbnp3_free(agbw->hp2); agbw->hp2 = NULL;}
-  if(agbw->hc2x){agbnp3_free(agbw->hc2x); agbw->hc2x = NULL;}
-  if(agbw->hc2y){agbnp3_free(agbw->hc2y); agbw->hc2y = NULL;}
-  if(agbw->hc2z){agbnp3_free(agbw->hc2z); agbw->hc2z = NULL;}
+  if(agbw->ha2){agbnp3_vfree(agbw->ha2); agbw->ha2 = NULL;}
+  if(agbw->hp2){agbnp3_vfree(agbw->hp2); agbw->hp2 = NULL;}
+  if(agbw->hc2x){agbnp3_vfree(agbw->hc2x); agbw->hc2x = NULL;}
+  if(agbw->hc2y){agbnp3_vfree(agbw->hc2y); agbw->hc2y = NULL;}
+  if(agbw->hc2z){agbnp3_vfree(agbw->hc2z); agbw->hc2z = NULL;}
 
-  if(agbw->hv3){agbnp3_free(agbw->hv3); agbw->hv3 = NULL;}
-  if(agbw->hv3p){agbnp3_free(agbw->hv3p); agbw->hv3p = NULL;}
-  if(agbw->hfp3){agbnp3_free(agbw->hfp3); agbw->hfp3 = NULL;}
-  if(agbw->hfpp3){agbnp3_free(agbw->hfpp3); agbw->hfpp3 = NULL;}
+  if(agbw->hv3){agbnp3_vfree(agbw->hv3); agbw->hv3 = NULL;}
+  if(agbw->hv3p){agbnp3_vfree(agbw->hv3p); agbw->hv3p = NULL;}
+  if(agbw->hfp3){agbnp3_vfree(agbw->hfp3); agbw->hfp3 = NULL;}
+  if(agbw->hfpp3){agbnp3_vfree(agbw->hfpp3); agbw->hfpp3 = NULL;}
 
-  if(agbw->qdv){agbnp3_free(agbw->qdv); agbw->qdv = NULL;}
-  if(agbw->qR1v){agbnp3_free(agbw->qR1v); agbw->qR1v = NULL;}
-  if(agbw->qR2v){agbnp3_free(agbw->qR2v); agbw->qdv = NULL;}
-  if(agbw->qqv){agbnp3_free(agbw->qqv); agbw->qqv = NULL;}
-  if(agbw->qdqv){agbnp3_free(agbw->qdqv); agbw->qdqv = NULL;}
-  if(agbw->qav){agbnp3_free(agbw->qav); agbw->qav = NULL;}
-  if(agbw->qbv){agbnp3_free(agbw->qbv); agbw->qbv = NULL;}
+  if(agbw->qdv){agbnp3_vfree(agbw->qdv); agbw->qdv = NULL;}
+  if(agbw->qR1v){agbnp3_vfree(agbw->qR1v); agbw->qR1v = NULL;}
+  if(agbw->qR2v){agbnp3_vfree(agbw->qR2v); agbw->qdv = NULL;}
+  if(agbw->qqv){agbnp3_vfree(agbw->qqv); agbw->qqv = NULL;}
+  if(agbw->qdqv){agbnp3_vfree(agbw->qdqv); agbw->qdqv = NULL;}
+  if(agbw->qav){agbnp3_vfree(agbw->qav); agbw->qav = NULL;}
+  if(agbw->qbv){agbnp3_vfree(agbw->qbv); agbw->qbv = NULL;}
 
-  if(agbw->qkv){agbnp3_free(agbw->qkv); agbw->qkv = NULL;}
-  if(agbw->qxh){agbnp3_free(agbw->qxh); agbw->qxh = NULL;}
-  if(agbw->qyp){agbnp3_free(agbw->qyp); agbw->qyp = NULL;}
-  if(agbw->qy){agbnp3_free(agbw->qy); agbw->qy = NULL;}
-  if(agbw->qy2p){agbnp3_free(agbw->qy2p); agbw->qy2p = NULL;}
-  if(agbw->qy2){agbnp3_free(agbw->qy2); agbw->qy2 = NULL;}
-  if(agbw->qf1){agbnp3_free(agbw->qf1); agbw->qf1 = NULL;}
-  if(agbw->qf2){agbnp3_free(agbw->qf2); agbw->qf2 = NULL;}
-  if(agbw->qfp1){agbnp3_free(agbw->qfp1); agbw->qfp1 = NULL;}
-  if(agbw->qfp2){agbnp3_free(agbw->qfp2); agbw->qfp2 = NULL;}
+  if(agbw->qkv){agbnp3_vfree(agbw->qkv); agbw->qkv = NULL;}
+  if(agbw->qxh){agbnp3_vfree(agbw->qxh); agbw->qxh = NULL;}
+  if(agbw->qyp){agbnp3_vfree(agbw->qyp); agbw->qyp = NULL;}
+  if(agbw->qy){agbnp3_vfree(agbw->qy); agbw->qy = NULL;}
+  if(agbw->qy2p){agbnp3_vfree(agbw->qy2p); agbw->qy2p = NULL;}
+  if(agbw->qy2){agbnp3_vfree(agbw->qy2); agbw->qy2 = NULL;}
+  if(agbw->qf1){agbnp3_vfree(agbw->qf1); agbw->qf1 = NULL;}
+  if(agbw->qf2){agbnp3_vfree(agbw->qf2); agbw->qf2 = NULL;}
+  if(agbw->qfp1){agbnp3_vfree(agbw->qfp1); agbw->qfp1 = NULL;}
+  if(agbw->qfp2){agbnp3_vfree(agbw->qfp2); agbw->qfp2 = NULL;}
 
-  if(agbw->wb_iatom){agbnp3_free(agbw->wb_iatom); agbw->wb_iatom = NULL;}
-  if(agbw->wb_gvolv){agbnp3_free(agbw->wb_gvolv); agbw->wb_gvolv = NULL;}
-  if(agbw->wb_gderwx){agbnp3_free(agbw->wb_gderwx); agbw->wb_gderwx = NULL;}
-  if(agbw->wb_gderwy){agbnp3_free(agbw->wb_gderwy); agbw->wb_gderwy = NULL;}
-  if(agbw->wb_gderwz){agbnp3_free(agbw->wb_gderwz); agbw->wb_gderwz = NULL;}
-  if(agbw->wb_gderix){agbnp3_free(agbw->wb_gderix); agbw->wb_gderix = NULL;}
-  if(agbw->wb_gderiy){agbnp3_free(agbw->wb_gderiy); agbw->wb_gderiy = NULL;}
-  if(agbw->wb_gderiz){agbnp3_free(agbw->wb_gderiz); agbw->wb_gderiz = NULL;}
+  if(agbw->wb_iatom){agbnp3_vfree(agbw->wb_iatom); agbw->wb_iatom = NULL;}
+  if(agbw->wb_gvolv){agbnp3_vfree(agbw->wb_gvolv); agbw->wb_gvolv = NULL;}
+  if(agbw->wb_gderwx){agbnp3_vfree(agbw->wb_gderwx); agbw->wb_gderwx = NULL;}
+  if(agbw->wb_gderwy){agbnp3_vfree(agbw->wb_gderwy); agbw->wb_gderwy = NULL;}
+  if(agbw->wb_gderwz){agbnp3_vfree(agbw->wb_gderwz); agbw->wb_gderwz = NULL;}
+  if(agbw->wb_gderix){agbnp3_vfree(agbw->wb_gderix); agbw->wb_gderix = NULL;}
+  if(agbw->wb_gderiy){agbnp3_vfree(agbw->wb_gderiy); agbw->wb_gderiy = NULL;}
+  if(agbw->wb_gderiz){agbnp3_vfree(agbw->wb_gderiz); agbw->wb_gderiz = NULL;}
 
   return AGBNP_OK;
 }
@@ -1329,6 +1220,8 @@ int agbnp3_total_energy(AGBNPdata *agb, int init,
 		    float_i *ecav, float_i *ecorr_cav, 
 			float_i *ehb){
 
+  int verbose = 0;
+
   static const float_a tokcalmol = 332.0; /* conversion to kcal/mol */
   int i, ki; /* counters */
   float_a a, f, fp;
@@ -1354,8 +1247,6 @@ int agbnp3_total_energy(AGBNPdata *agb, int init,
 
   float_a *volumep = agbw->volumep; /* self-volumes */
   float_a *surf_area_f = agbw->surf_area_f; /* filtered surface areas */
-  float_a *volumep_constant = agbw->volumep_constant;
-  float_a *surfarea_constant = agbw->surfarea_constant;
   float_a *igamma = agb->igamma; /* ideal gamma */
   float_a *gamma = agbw->gamma; /* ideal gamma + corrction gamma */
   float_a *sgamma = agb->sgamma; /* correction gamma */
@@ -1434,7 +1325,9 @@ int agbnp3_total_energy(AGBNPdata *agb, int init,
   /*                                             */
   /*           neighbor lists                    */
   /*                                             */
-  //printf("%d: agbnp3_neighbor_lists()\n",iproc);
+  ///printf("%d: agbnp3_neighbor_lists()\n",iproc);
+
+  if(verbose) printf("agbnp3_neighbor_lists() ...\n");
 
   res = agbnp3_neighbor_lists(agb, agbw_h, agb->x, agb->y, agb->z);
   if(res != AGBNP_OK){
@@ -1457,6 +1350,8 @@ int agbnp3_total_energy(AGBNPdata *agb, int init,
   /*         self volumes and surface areas         */
   /*                                                */
   //printf("%d: agbnp3_self_volumes_rooti()\n",iproc);
+
+  if(verbose) printf("agbnp3_self_volumes_rooti() ...\n");
 
 #ifdef ATIMER
   if(!iproc) startime = (float)clock()/CLOCKS_PER_SEC;
@@ -1524,6 +1419,7 @@ int agbnp3_total_energy(AGBNPdata *agb, int init,
  /*                                                     */
  //printf("%d: agbnp3_inverse_born_radii_nolist_soa()\n",iproc);
 
+  if(verbose) printf("agbnp3_inverse_born_radii_nolist_soa() ...\n");
 
 #ifdef ATIMER
  if(!iproc) startime = (float)clock()/CLOCKS_PER_SEC;
@@ -1593,6 +1489,8 @@ int agbnp3_total_energy(AGBNPdata *agb, int init,
   /*                                                                 */
   //printf("%d: agbnp3_gb_energy_nolist_ps()\n",iproc);
 
+  if(verbose) printf("agbnp3_gb_energy_nolist_ps() ...\n");
+
 #ifdef ATIMER
   if(!iproc) startime = (float)clock()/CLOCKS_PER_SEC;
 #pragma omp barrier
@@ -1629,6 +1527,9 @@ int agbnp3_total_energy(AGBNPdata *agb, int init,
   /*                                                          */
   /* GB derivatives contribution at constant self volumes     */
   /*                                                          */
+
+   if(verbose) printf("agbnp3_gb_ders_constvp_nolist_ps() ...\n");
+  
 #ifdef ATIMER
   if(!iproc) startime = (float)clock()/CLOCKS_PER_SEC;
 #pragma omp barrier
@@ -1657,6 +1558,8 @@ int agbnp3_total_energy(AGBNPdata *agb, int init,
   /*                                                                          */
   //printf("%d: agbnp3_create_wsatoms()\n",iproc);
 
+  if(verbose) printf("agbnp3_create_wsatoms() ...\n");
+
 #ifdef ATIMER
   if(!iproc) startime = (float)clock()/CLOCKS_PER_SEC;
 #pragma omp barrier 
@@ -1676,6 +1579,8 @@ int agbnp3_total_energy(AGBNPdata *agb, int init,
   /*                                                                          */
   //printf("%d: agbnp3_ws_free_volumes_scalev_ps()\n",iproc);  
   
+  if(verbose) printf("agbnp3_ws_free_volumes_scalev_ps() ...\n");
+
   res = agbnp3_ws_free_volumes_scalev_ps(agb, agbw_h);
   if(res != AGBNP_OK){
     agbnp3_errprint( "agbnp3_total_energy(): error in agbnp3_ws_free_volumes_scalev(agb)\n");
@@ -1890,7 +1795,7 @@ int agbnp3_total_energy(AGBNPdata *agb, int init,
 /* clear contents of water site, frees associated neighbor list */
 int agbnp3_clr_wsat(WSat *wsat){
   if(wsat->nlist){
-    agbnp3_free(wsat->nlist);
+    free(wsat->nlist);
   }
   memset(wsat,0,sizeof(WSat));
   return AGBNP_OK;
@@ -3927,9 +3832,6 @@ int agbnp3_nblist_reorder(AGBworkdata *agbw, NeighList *nl, int iat, int *indx){
   }
 
 
-  //  if(js){ agbnp3_free(js); }
-  //if(pbcs){ agbnp3_free(pbcs); }
-  // if(datas){ agbnp3_free(datas); }
   return AGBNP_OK;
 }
 
@@ -3954,7 +3856,6 @@ int agbnp3_int_reorder(AGBworkdata *agbw, int n, int *nl, int *indx){
   }
   memcpy(nl,js,n*sizeof(int));
 
-  // if(js){ agbnp3_free(js); }
  return AGBNP_OK;
 }
 
@@ -4038,8 +3939,6 @@ float_a agbnp3_i4(float_a rij, float_a Ri, float_a Rj,
   NeighList *far_nl = agbw->far_nl;
   int *nbiat = agbw->nbiat;
   int *isheavy = agbw->isheavy;
-  int do_frozen = agb->do_frozen;
-  int *isbfrozen = agb->agbw->isbfrozen;
   float_a *galpha = agb->agbw->galpha;
   float_a *gprefac = agb->agbw->gprefac;
   int nsym = agb->nsym;

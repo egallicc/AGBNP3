@@ -483,11 +483,6 @@ int agbnp3_inverse_born_radii_nolist_soa(AGBNPdata *agb, AGBworkdata *agbw_h,
 
   float cvdw = AGBNP_RADIUS_INCREMENT;
 
-  float **mvpji = agb->agbw->mvpji;
-
-  float **mq4 = agb->agbw->mq4;
-  float **mq4t = agb->agbw->mq4t;
-
   float *dv = agbw_h->qdv;
   float *R1v = agbw_h->qR1v;
   float *R2v = agbw_h->qR2v;
@@ -651,13 +646,8 @@ int agbnp3_inverse_born_radii_nolist_soa(AGBNPdata *agb, AGBworkdata *agbw_h,
   float_a (*dgbdr)[3] = agbw_h->dgbdr_h;
   float_a (*dvwdr)[3] = agbw_h->dvwdr_h;
   float *q4cache = agbw_h->q4cache;
-  int do_frozen = agb->do_frozen;
-  int *isvfrozen = agb->agbw->isvfrozen;
-  float_a (*dgbdr_c)[3] = agb->agbw->dgbdr_c;
-  float_a (*dvwdr_c)[3] = agb->agbw->dvwdr_c;
   float_a u[3], ur[3];
   float_a w[3], wr[3];
-  float **mvpji = agb->agbw->mvpji;
 
   float *dgbdrx = agbw_h->dgbdrx;
   float *dgbdry = agbw_h->dgbdry;
@@ -1050,7 +1040,6 @@ int agbnp3_self_volumes_rooti(AGBNPdata *agb, AGBworkdata *agbw,
   float *surf_area = agbw->surf_area;
   float *vols = agbw->vols;
 
-  float **mvpji = agb->agbw->mvpji;
   GParm *atm_gs = agbw->atm_gs;
   GParm *gsi, *gsj, gsij;
 
@@ -1599,13 +1588,9 @@ int agbnp3_der_vp_rooti(AGBNPdata *agb, AGBworkdata *agbw,
   float_a sr,u,v,w,ur[3];
 
   float_a deruij,deruji,dervij,dervji,q;
-  float **mq4 = agb->agbw->mq4;
-  float **mq4t = agb->agbw->mq4t;
-
 
   int natoms = agb->natoms;
   int nheavyat = agb->nheavyat;
-  float **mvpji = agb->agbw->mvpji;
 
   GParm *atm_gs = agbw->atm_gs;
   GParm *gsi, gsij, *gsj;
@@ -1966,12 +1951,8 @@ int agbnp3_cavity_dersgb_rooti(AGBNPdata *agb, AGBworkdata *agbw,
   int jj,lat;
 
   float_a deruij,deruji,dervij,dervji,q;
-  float **mq4 = agb->agbw->mq4;
-  float **mq4t = agb->agbw->mq4t;
-
 
   int natoms = agb->natoms;
-  float **mvpji = agb->agbw->mvpji;
   GParm *atm_gs = agbw->atm_gs;
   GParm *gsi, gsij, *gsj;
 
@@ -2696,10 +2677,10 @@ int agbnp3_ws_free_volumes_scalev_ps(AGBNPdata *agb, AGBworkdata *agbw){
 
   if(agbw->nwsat > agbw->wsize){
     agbw->wsize += agbw->nwsat;
-    agbnp3_free(agbw->w_iov);
-    agbnp3_free(agbw->w_nov);
-    agbnp3_calloc((void **)&(agbw->w_iov), agbw->wsize*sizeof(int));
-    agbnp3_calloc((void **)&(agbw->w_nov), agbw->wsize*sizeof(int));
+    agbnp3_vfree(agbw->w_iov);
+    agbnp3_vfree(agbw->w_nov);
+    agbnp3_vcalloc((void **)&(agbw->w_iov), agbw->wsize*sizeof(int));
+    agbnp3_vcalloc((void **)&(agbw->w_nov), agbw->wsize*sizeof(int));
     w_iov = agbw->w_iov;
     w_nov = agbw->w_nov;
   }

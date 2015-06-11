@@ -264,34 +264,9 @@ typedef struct AGBworkdata_ {
   float_a *sp; /* scaling volume factors */
   float_a *spe; /* scaling volume factors w/o surface corrections */
   void **nbdata; /* a buffer to hold pointers to PBC translation vectors */
-  float_a *xj, *yj, *zj; /* coordinate buffers to hold PBC-adjusted neighbor positions */
-
-  int *isvfrozen; /* 1 if atom belongs to frozen set AND whose near neighbors 
-		     (heavy atoms) are all frozen atoms (constant self-volume).
-		     0 otherwise. Frozen hydrogens are logically part of this 
-		     set. */
-  int *isvvfrozen; /* 1 if all near neighbors are vfrozen */
-  int *isbfrozen; /* 1 if atom belongs to frozen set AND whose heavy atom 
-		     neighbors (near and far) are all part of the vfrozen 
-		     set (constant Born radius). 0 otherwise. */
-  float_a *volumep_constant; /* holds the constant part of the self-volume */
-  float_a *br1_const; /* holds the constant part of the inverse Born radius */ 
-  float_a *gbpair_const; /* holds constant part of GB pair sum */
-  float_a *dera_const; /* holds the constant part of Ai's */
-
-  float_a *deru_c; /* holds the constant part of Ui's */
-  float_a *derv_c; /* holds the constant part of Vi's */
-  
 
   int nq4cache;    /* i4() memory cache size */
   float  *q4cache; /* a memory cache to store i4() stuff */
-
-  int nv2cache;   /* 2-body memory cache size */
-  float  *v2cache; /* a memory cache to store 3-body 
-		      overlaps stuff */
-
-  int novfcache; /* a cache of flags for recalculating overlaps */
-  int *ovfcache;
 
   int nnl, nnlrc;    /* size of near_nl and far_nl neighbor lists */
   NeighList *near_nl; /* near (d<Ri+Rj) neighbor list for heavy atoms */
@@ -301,13 +276,9 @@ typedef struct AGBworkdata_ {
   float_a *dgbdry;
   float_a *dgbdrz;
 
-
   float_a (*dgbdr_h)[3]; /* gradient of GB energy */
   float_a (*dvwdr_h)[3]; /* gradient of vdW energy */
   float_a (*dehb)[3];    /* gradient of HB energy */
-
-  float_a (*dgbdr_c)[3]; /* constant component of gradient of GB energy */
-  float_a (*dvwdr_c)[3]; /* constant component of gradient of vdW energy */
 
   /* from cavity work data */
   float_a *surf_area; /* surface areas (unfiltered) */
@@ -315,29 +286,19 @@ typedef struct AGBworkdata_ {
   float_a *gamma; /* ideal gamma + correction gamma */
   float_a *gammap; /* gamma corrected by derivative of surface area
 			    switching function (for derivative calculation) */
-  float_a *surfarea_constant;/* holds the constant part of the surface area */
   float_a (*decav_h)[3];
-  float_a (*decav_const)[3];
 
   int *nlist;  /* temporary arrays of length 'natoms' for sorting, etc. */
   int *js;
   NeighVector *pbcs;
   void **datas;
 
-  float **mvpji; /* NxN matrix which stores modified pair volumes for each pair ij */
-  float **mq4;  /* upper triangular half of NxN matrix which stores Qji integrals for each pair*/
-  float **mq4t; /* transpose of lower triangular half of NxN matrix which stores Qji integrals for each pair*/
- 
   int *nl_indx;   /* index buffer used in neigh. list reordering */ 
   float_a *nl_r2v;/* distance buffer used in neigh. list reordering */ 
 
   int nwsat;            /* number of water sites pseudo atoms */
   int wsat_size;        /* size of ws atom list (wsat) */
   WSat *wsat;           /* list of ws atoms in the system */
-
-  float_a vdieli2_out; /* 1/(2 epsilon_out) */
-  float_a *vdieli2_in; /* 1/(2 epsilon_in) */
-
 
   /* list of overlaps and overlap roots for iterative volumetric algorithm */
   int size_overlap_lists[2]; //allocated size of overlap lists
@@ -485,10 +446,6 @@ typedef struct AGBNPdata_ {
   omp_lock_t *omplock; /* OpenMP locks for multithreading, one for each atom */
 #endif
   
-  int doalt;
-  int *alt_site;       /* id of alternate conf. site (starting from 1)*/
-  int *alt_id;         /* id of alternate conf. in site (starting from 1)*/
-
   int verbose;
 
   C1Table2D *f4c1table2d;//lookup table for i4 function
@@ -742,14 +699,14 @@ int agbnp3_fcompare( const void *val1, const void *val2 );
 void agbnp3_fsortindx( int pnval, float_a *val, int *indx );
 int agbnp3_nblist_reorder(AGBworkdata *agbw, NeighList *nl, int iat, int *indx);
 int agbnp3_int_reorder(AGBworkdata *agbw, int n, int *nl, int *indx);
-void agbnp3_free(void *x);
 void agbnp3_errprint(const char *fmt, ...);
 
 #define agbnp3_mymin(a,b) ((a) < (b) ? (a) : (b))
 
-int agbnp3_memalloc(void **memptr, const size_t size);
-int agbnp3_calloc(void **memptr, const size_t size);
-int agbnp3_ralloc(void **memptr, const size_t old_size, const size_t new_size);
+int agbnp3_vmemalloc(void **memptr, const size_t size);
+int agbnp3_vcalloc(void **memptr, const size_t size);
+int agbnp3_vralloc(void **memptr, const size_t old_size, const size_t new_size);
+void agbnp3_vfree(void *x);
 
 
 

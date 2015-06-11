@@ -30,6 +30,9 @@
 #include <stdarg.h>
 #include <math.h>
 #include <float.h>
+#ifdef __MINGW32__
+#include <malloc.h>
+#endif
 
 #include "agbnp3_private.h"
 
@@ -45,13 +48,20 @@ void agbnp3_errprint(const char *fmt, ...) {
   va_end(ap);
 }
 
-void agbnp3_free(void *x){
+/*                                                                      *
+ * Memory management for arrays. Aligns if using SIMD parallelization.. *
+ *                                                                      *
+ * Memory allocated by these routines must be free'd by agbnp3_vfree()  *
+ *                                                                      */
+void agbnp3_vfree(void *x){
+#ifdef __MINGW32__
+  if(x) __mingw_aligned_free(x);
+#else
   if(x) free(x);
+#endif
 }
-
-
- /* Memory allocator. Aligns if using SIMD parallelization.*/
-int agbnp3_memalloc(void **memptr, const size_t size){
+ /* Memory allocator for arrays. */
+int agbnp3_vmemalloc(void **memptr, const size_t size){
 #ifdef INTEL_MIC
   size_t alignment = 64;
 #else
@@ -62,33 +72,36 @@ int agbnp3_memalloc(void **memptr, const size_t size){
   size_t padded_size;
   //make size a multiple of alignment
   padded_size = (size/alignment + 1)*alignment;
+#ifdef __MINGW32__
+  //  mem = malloc(padded_size);
+  mem = __mingw_aligned_malloc(padded_size, alignment);
+#else
   retcode =  posix_memalign(&mem, alignment, padded_size);
   if(retcode) mem = NULL;
+#endif
   *memptr = mem;
   return retcode;
 }
-
 /* calloc() equivalent */
-int agbnp3_calloc(void **memptr, const size_t size){
+int agbnp3_vcalloc(void **memptr, const size_t size){
   int retcode;
   void *mem;
-  retcode = agbnp3_memalloc(&mem, size);
+  retcode = agbnp3_vmemalloc(&mem, size);
   if(retcode==0 && mem){
     memset(mem,0,size);
   }
   *memptr = mem;
   return retcode;
 }
-
 /* realloc equivalent */
-int agbnp3_realloc(void **memptr, const size_t old_size, const size_t new_size){
+int agbnp3_vrealloc(void **memptr, const size_t old_size, const size_t new_size){
   int retcode, size;
   void *mem;
-  retcode = agbnp3_memalloc(&mem, new_size);
+  retcode = agbnp3_vmemalloc(&mem, new_size);
   if(*memptr && retcode==0 && mem){
     size = ( new_size > old_size ) ? old_size : new_size;
     memcpy(mem,*memptr,size);
-    agbnp3_free(*memptr);
+    agbnp3_vfree(*memptr);
   }
   *memptr = mem;
   return retcode;
@@ -207,7 +220,7 @@ void agbnp3_cspline_setup(float dx, int n, float* y,
     y2[k] = y2[k]*y2[k+1] + u[k];
   }
 
-  agbnp3_free(u);
+  free(u);
 }
 
 void agbnp3_cspline_interpolate(float x, float dx, int n, float* y, float* y2,
@@ -374,9 +387,8 @@ int agbnp3_create_ctablef4(int n, float_a amax, float_a b,
   float_a *y, *y2, yp1, ypn = 0.0;
   float_a yinf=0.0;
 
-
-  agbnp3_memalloc((void **)&(y), n*sizeof(float));
-  agbnp3_memalloc((void **)&(y2), n*sizeof(float));
+  agbnp3_vmemalloc((void **)&(y), n*sizeof(float));
+  agbnp3_vmemalloc((void **)&(y2), n*sizeof(float));
   if(!(y && y2)){
     agbnp3_errprint( "agbnp3_create_ctablef4(): unable to allocate work buffers (%d floats)\n", 3*n);
     return AGBNP_ERR;
@@ -490,12 +502,6 @@ int agbnp3_reset_buffers(AGBNPdata *agb, AGBworkdata *agbw_h){
     memset(agbw->surf_area,0,natoms*sizeof(float));
     for(iat=0;iat<nheavyat;iat++){
       agbw->surf_area[iat] = 4.*pi*r[iat]*r[iat];
-    }
-  }
-#pragma omp single nowait
-  {
-    for(i=0;i<natoms;i++){
-      memset(agbw->mvpji[i],0,natoms*sizeof(float));
     }
   }
 #pragma omp single nowait
@@ -741,8 +747,8 @@ HTable *agbnp3_h_create(int nat, int size, int jump){
 
 void agbnp3_h_delete(HTable *ht){
   if(ht){
-    if(ht->key) agbnp3_free(ht->key);
-    agbnp3_free(ht);
+    if(ht->key) free(ht->key);
+    free(ht);
   }
 }
 
@@ -923,22 +929,22 @@ int agbnp3_reallocate_gbuffers(AGBworkdata *agbw, int size){
   size_t n = old_size*sizeof(float);
   size_t m = size*sizeof(float);
 
-  agbnp3_realloc((void **)&(agbw->a1), n, m);
-  agbnp3_realloc((void **)&(agbw->p1), n , m);
-  agbnp3_realloc((void **)&(agbw->c1x), n, m);
-  agbnp3_realloc((void **)&(agbw->c1y), n, m);
-  agbnp3_realloc((void **)&(agbw->c1z), n, m);
+  agbnp3_vrealloc((void **)&(agbw->a1), n, m);
+  agbnp3_vrealloc((void **)&(agbw->p1), n , m);
+  agbnp3_vrealloc((void **)&(agbw->c1x), n, m);
+  agbnp3_vrealloc((void **)&(agbw->c1y), n, m);
+  agbnp3_vrealloc((void **)&(agbw->c1z), n, m);
 
-  agbnp3_realloc((void **)&(agbw->a2), n, m);
-  agbnp3_realloc((void **)&(agbw->p2), n, m);
-  agbnp3_realloc((void **)&(agbw->c2x), n, m);
-  agbnp3_realloc((void **)&(agbw->c2y), n, m);
-  agbnp3_realloc((void **)&(agbw->c2z), n, m);
+  agbnp3_vrealloc((void **)&(agbw->a2), n, m);
+  agbnp3_vrealloc((void **)&(agbw->p2), n, m);
+  agbnp3_vrealloc((void **)&(agbw->c2x), n, m);
+  agbnp3_vrealloc((void **)&(agbw->c2y), n, m);
+  agbnp3_vrealloc((void **)&(agbw->c2z), n, m);
 
-  agbnp3_realloc((void **)&(agbw->v3), n, m);
-  agbnp3_realloc((void **)&(agbw->v3p), n, m);
-  agbnp3_realloc((void **)&(agbw->fp3), n, m);
-  agbnp3_realloc((void **)&(agbw->fpp3), n, m);
+  agbnp3_vrealloc((void **)&(agbw->v3), n, m);
+  agbnp3_vrealloc((void **)&(agbw->v3p), n, m);
+  agbnp3_vrealloc((void **)&(agbw->fp3), n, m);
+  agbnp3_vrealloc((void **)&(agbw->fpp3), n, m);
 
   if(!(agbw->a1 && agbw->p1 && agbw->c1x && agbw->c1y && agbw->c1z &&
        agbw->a2 && agbw->p2 && agbw->c2x && agbw->c2y && agbw->c2z &&
@@ -959,24 +965,24 @@ int agbnp3_reallocate_hbuffers(AGBworkdata *agbw, int size){
   size_t n = old_size*sizeof(float);
   size_t m = size*sizeof(float);
 
-  agbnp3_realloc((void **)&(agbw->hiat), old_size*sizeof(int), size*sizeof(int));
+  agbnp3_vrealloc((void **)&(agbw->hiat), old_size*sizeof(int), size*sizeof(int));
 
-  agbnp3_realloc((void **)&(agbw->ha1), n, m);
-  agbnp3_realloc((void **)&(agbw->hp1), n , m);
-  agbnp3_realloc((void **)&(agbw->hc1x), n, m);
-  agbnp3_realloc((void **)&(agbw->hc1y), n, m);
-  agbnp3_realloc((void **)&(agbw->hc1z), n, m);
+  agbnp3_vrealloc((void **)&(agbw->ha1), n, m);
+  agbnp3_vrealloc((void **)&(agbw->hp1), n , m);
+  agbnp3_vrealloc((void **)&(agbw->hc1x), n, m);
+  agbnp3_vrealloc((void **)&(agbw->hc1y), n, m);
+  agbnp3_vrealloc((void **)&(agbw->hc1z), n, m);
 
-  agbnp3_realloc((void **)&(agbw->ha2), n, m);
-  agbnp3_realloc((void **)&(agbw->hp2), n, m);
-  agbnp3_realloc((void **)&(agbw->hc2x), n, m);
-  agbnp3_realloc((void **)&(agbw->hc2y), n, m);
-  agbnp3_realloc((void **)&(agbw->hc2z), n, m);
+  agbnp3_vrealloc((void **)&(agbw->ha2), n, m);
+  agbnp3_vrealloc((void **)&(agbw->hp2), n, m);
+  agbnp3_vrealloc((void **)&(agbw->hc2x), n, m);
+  agbnp3_vrealloc((void **)&(agbw->hc2y), n, m);
+  agbnp3_vrealloc((void **)&(agbw->hc2z), n, m);
 
-  agbnp3_realloc((void **)&(agbw->hv3), n, m);
-  agbnp3_realloc((void **)&(agbw->hv3p), n, m);
-  agbnp3_realloc((void **)&(agbw->hfp3), n, m);
-  agbnp3_realloc((void **)&(agbw->hfpp3), n, m);
+  agbnp3_vrealloc((void **)&(agbw->hv3), n, m);
+  agbnp3_vrealloc((void **)&(agbw->hv3p), n, m);
+  agbnp3_vrealloc((void **)&(agbw->hfp3), n, m);
+  agbnp3_vrealloc((void **)&(agbw->hfpp3), n, m);
 
   if(!(agbw->hiat && agbw->ha1 && agbw->hp1 && agbw->hc1x && agbw->hc1y && agbw->hc1z &&
        agbw->ha2 && agbw->hp2 && agbw->hc2x && agbw->hc2y && agbw->hc2z &&
@@ -997,24 +1003,24 @@ int agbnp3_reallocate_qbuffers(AGBworkdata *agbw, int size){
   size_t n = old_size*sizeof(float);
   size_t m = size*sizeof(float);
 
-  agbnp3_realloc((void **)&(agbw->qdv), n, m);
-  agbnp3_realloc((void **)&(agbw->qR1v), n , m);
-  agbnp3_realloc((void **)&(agbw->qR2v), n, m);
-  agbnp3_realloc((void **)&(agbw->qqv), n, m);
-  agbnp3_realloc((void **)&(agbw->qdqv), n, m);
-  agbnp3_realloc((void **)&(agbw->qav), n, m);
-  agbnp3_realloc((void **)&(agbw->qbv), n, m);
+  agbnp3_vrealloc((void **)&(agbw->qdv), n, m);
+  agbnp3_vrealloc((void **)&(agbw->qR1v), n , m);
+  agbnp3_vrealloc((void **)&(agbw->qR2v), n, m);
+  agbnp3_vrealloc((void **)&(agbw->qqv), n, m);
+  agbnp3_vrealloc((void **)&(agbw->qdqv), n, m);
+  agbnp3_vrealloc((void **)&(agbw->qav), n, m);
+  agbnp3_vrealloc((void **)&(agbw->qbv), n, m);
 
-  agbnp3_realloc((void **)&(agbw->qkv), n, m);
-  agbnp3_realloc((void **)&(agbw->qxh), n, m);
-  agbnp3_realloc((void **)&(agbw->qyp), n, m);
-  agbnp3_realloc((void **)&(agbw->qy), n, m);
-  agbnp3_realloc((void **)&(agbw->qy2p), n, m);
-  agbnp3_realloc((void **)&(agbw->qy2), n, m);
-  agbnp3_realloc((void **)&(agbw->qf1), n, m);
-  agbnp3_realloc((void **)&(agbw->qf2), n, m);
-  agbnp3_realloc((void **)&(agbw->qfp1), n, m);
-  agbnp3_realloc((void **)&(agbw->qfp2), n, m);
+  agbnp3_vrealloc((void **)&(agbw->qkv), n, m);
+  agbnp3_vrealloc((void **)&(agbw->qxh), n, m);
+  agbnp3_vrealloc((void **)&(agbw->qyp), n, m);
+  agbnp3_vrealloc((void **)&(agbw->qy), n, m);
+  agbnp3_vrealloc((void **)&(agbw->qy2p), n, m);
+  agbnp3_vrealloc((void **)&(agbw->qy2), n, m);
+  agbnp3_vrealloc((void **)&(agbw->qf1), n, m);
+  agbnp3_vrealloc((void **)&(agbw->qf2), n, m);
+  agbnp3_vrealloc((void **)&(agbw->qfp1), n, m);
+  agbnp3_vrealloc((void **)&(agbw->qfp2), n, m);
 
 
   if(!(agbw->qdv && agbw->qR1v && agbw->qR2v && agbw->qqv && agbw->qdqv && agbw->qav && agbw->qav)){
@@ -1034,15 +1040,15 @@ int agbnp3_reallocate_wbuffers(AGBworkdata *agbw, int size){
   size_t n = old_size*sizeof(float);
   size_t m = size*sizeof(float);
   
-  agbnp3_realloc((void **)&(agbw->wb_iatom), old_size*sizeof(int), size*sizeof(int));
+  agbnp3_vrealloc((void **)&(agbw->wb_iatom), old_size*sizeof(int), size*sizeof(int));
 
-  agbnp3_realloc((void **)&(agbw->wb_gvolv), n, m);
-  agbnp3_realloc((void **)&(agbw->wb_gderwx), n , m);
-  agbnp3_realloc((void **)&(agbw->wb_gderwy), n, m);
-  agbnp3_realloc((void **)&(agbw->wb_gderwz), n, m);
-  agbnp3_realloc((void **)&(agbw->wb_gderix), n, m);
-  agbnp3_realloc((void **)&(agbw->wb_gderiy), n, m);
-  agbnp3_realloc((void **)&(agbw->wb_gderiz), n, m);
+  agbnp3_vrealloc((void **)&(agbw->wb_gvolv), n, m);
+  agbnp3_vrealloc((void **)&(agbw->wb_gderwx), n , m);
+  agbnp3_vrealloc((void **)&(agbw->wb_gderwy), n, m);
+  agbnp3_vrealloc((void **)&(agbw->wb_gderwz), n, m);
+  agbnp3_vrealloc((void **)&(agbw->wb_gderix), n, m);
+  agbnp3_vrealloc((void **)&(agbw->wb_gderiy), n, m);
+  agbnp3_vrealloc((void **)&(agbw->wb_gderiz), n, m);
 
   if(!(agbw->wb_iatom && agbw->wb_gderwx && agbw->wb_gderwy && agbw->wb_gderwz &&
        agbw->wb_gderix &&  agbw->wb_gderiy && agbw->wb_gderiz)){ 
@@ -1061,12 +1067,12 @@ int agbnp3_reallocate_overlap_lists(AGBworkdata *agbw, int size){
 
   for(i=0;i<2;i++){
 
-    agbnp3_realloc((void **)&(agbw->overlap_lists[i]), 
+    agbnp3_vrealloc((void **)&(agbw->overlap_lists[i]), 
 		   agbw->size_overlap_lists[i]*sizeof(GOverlap),
 		   size*sizeof(GOverlap));
     agbw->size_overlap_lists[i] = size;
 
-    agbnp3_realloc((void **)&(agbw->root_lists[i]), 
+    agbnp3_vrealloc((void **)&(agbw->root_lists[i]), 
 		   agbw->size_overlap_lists[i]*sizeof(int),
 		   size*sizeof(GOverlap));
     agbw->size_root_lists[i] = size;
