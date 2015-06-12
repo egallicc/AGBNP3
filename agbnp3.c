@@ -278,6 +278,7 @@ int agbnp3_new(int *tag, int natoms,
       agbdata->iheavyat[agbdata->nheavyat++] = iat;
     }
   }
+
   agbnp3_vfree(iswhat);
 
   /* set dielectric contstants */
@@ -404,8 +405,6 @@ int agbnp3_new(int *tag, int natoms,
     return AGBNP_ERR;
   }
 #endif /* _OPENMP */
-
-  printf("agbnp3_new(): 9\n");
 
   /* set in_use=TRUE */
   agbdata->in_use = TRUE;
@@ -897,7 +896,7 @@ int agbnp3_atom_reorder(AGBNPdata *agb, int nhydrogen, int *ihydrogen){
       return AGBNP_ERR;
   }
 
-  n = 2*natoms; //initial size of buffers for inverse born radii
+  n = 2*natoms + 4; //initial size of buffers for inverse born radii
   if(agbnp3_reallocate_qbuffers(agbw, n) != AGBNP_OK){
     agbnp3_errprint( "agbnp3_allocate_agbworkdata(): unable to allocate memory for inverse born radii buffers.\n");
       return AGBNP_ERR;
@@ -1097,7 +1096,7 @@ int agbnp3_init_agbworkdata(AGBNPdata *agb, AGBworkdata *agbw){
 }
 
 float_a agbnp3_swf_area(float_a x, float_a *fp){
-  static const float_a a2 = 5.*5.;
+  static const float_a a2 = 5.f*5.f;
   float_a t, f, x2;
  
   if(x<0.0){
@@ -1321,7 +1320,6 @@ int agbnp3_total_energy(AGBNPdata *agb, int init,
 #pragma omp flush(error)
   if(error) goto ERROR;
 
-
   /*                                             */
   /*           neighbor lists                    */
   /*                                             */
@@ -1367,7 +1365,6 @@ int agbnp3_total_energy(AGBNPdata *agb, int init,
 #pragma omp flush(error)
   if(error) goto ERROR;
 
-
   /*                                                                     */
   /* calculate volume scaling factors and surface-corrected self volumes */
   /* does gather for volumes, surface areas                              */
@@ -1387,17 +1384,18 @@ int agbnp3_total_energy(AGBNPdata *agb, int init,
 #pragma omp barrier
 #pragma omp single nowait
   {
+    int i;
     /* calculates cavity energy */
     *ecav = 0.0;
     *ecorr_cav = 0.0;
-    for(i=0;i<nheavyat;i++){
-      iat = iheavyat[i];
-      *ecav += igamma[iat]*agb->surf_area[iat];
-      *ecorr_cav += sgamma[iat]*agb->surf_area[iat];
+    for(i=0;i<agb->nheavyat;i++){
+      *ecav += igamma[i]*agb->surf_area[i];
+      *ecorr_cav += sgamma[i]*agb->surf_area[i];
     }
   }
 #pragma omp single
   {
+    int iat, i;
     /* volume of molecule */
     *mol_volume = 0.0;
     for(i = 0; i < nheavyat; i++){
@@ -1589,6 +1587,25 @@ int agbnp3_total_energy(AGBNPdata *agb, int init,
   }
 #pragma omp flush(error)
   if(error) goto ERROR;
+
+#pragma omp critical
+  if(agb->verbose)
+  {
+    int iws;
+    float xa = AGBNP_HB_SWA;
+    float xb = AGBNP_HB_SWB;
+    float fp, s;
+    printf("WSphere   x   y   z  Parent   Type    Khb   FreeVol    FilterVol   Energy\n");
+    for(iws=0;iws<agbw_h->nwsat;iws++){
+      s = agbnp3_pol_switchfunc(agbw_h->wsat[iws].sp, xa, xb, &fp, NULL);    
+      printf("WS %d %f %f %f %d %d %f  %f  %f  %f\n",iws, 
+	     agbw_h->wsat[iws].pos[0], agbw_h->wsat[iws].pos[1], agbw_h->wsat[iws].pos[2],
+	     agbw_h->wsat[iws].parent[0], agbw_h->wsat[iws].type, agbw_h->wsat[iws].khb, agbw_h->wsat[iws].sp, s, agbw_h->wsat[iws].khb*s); 
+    }    
+    printf("WST: Nws = %d\n", agbw_h->nwsat);
+  }
+
+
 
 #ifdef ATIMER
 #pragma omp barrier

@@ -121,6 +121,9 @@ int agbnp3_create_ctablef42d(AGBNPdata *agb,
 
   agbnp3_create_ctablef42d_hash(agb, na, amax, &tbl2d);
   *table2d = tbl2d;
+
+  //agbnp3_test_create_ctablef42d_hash(agb, 0.f, tbl2d);
+
   return AGBNP_OK;
 }
 
@@ -340,6 +343,12 @@ int agbnp3_interpolate_ctablef42d_soa
 
     key = ym[i] * nkey;
     iy = agbnp3_h_find(table2d->y2i, key); 
+
+    if(iy < 0) {
+      agbnp3_errprint("agbnp3_interpolate_ctablef42d_soa(): internal error: could not find interpolation table for radius ratio %f\n", ym[i]/(float)nkey);
+      return AGBNP_ERR;
+    }
+    
     table1 = table2d->table[iy];
 
     dx = table1->dx;
@@ -586,7 +595,7 @@ int agbnp3_reset_buffers(AGBNPdata *agb, AGBworkdata *agbw_h){
     a = surf_area[iat];
     f = agbnp3_swf_area(a, &fp);
     pr = r[iat]*(1. - pow(rvdw/r[iat],3))/3.;
-    us = pr;
+    us = 1.0*pr; //0.8
     psvol_h[iat] = (fp*a+f)*us; /* needed to compute effective gamma's in
 				       agbnp3_gb_deruv() */
     volumep_h[iat] = volumep[iat] - surf_area_f[iat]*us;
@@ -854,6 +863,10 @@ int agbnp3_create_ctablef42d_hash(AGBNPdata *agb, int na, float_a amax,
 
   /* number of look-up tables is ~ntypes^2 */
   size = agbnp3_two2n_size(ntypes*ntypes);
+
+  //TBF
+  size *= 2;
+
   tbl2d->table = (C1Table **)malloc(size*sizeof(C1Table *));
   tbl2d->y2i = agbnp3_h_create(0, size, 1);
   agbnp3_h_init(tbl2d->y2i);
@@ -895,15 +908,22 @@ int agbnp3_test_create_ctablef42d_hash(AGBNPdata *agb, float amax, C1Table2DH *t
   float x, f, fp;
   int nkey = table2d->nkey;
 
-  b = (agb->r[iat]-c)/agb->r[jat];
-  key = b * nkey;
-  slot = agbnp3_h_find(table2d->y2i, key);
-  if(slot < 0){
-    agbnp3_errprint( "agbnp3_test_create_ctablef42d_hash(): unable to find entry for radii combination (%f,%f)\n", agb->r[iat], agb->r[jat]);
-    return AGBNP_ERR;
-  }
+  for(iat=0;iat < agb->natoms;iat++){
+    for(jat=iat+1;jat < agb->natoms ; jat++){
 
+      b = (agb->r[iat]-c)/agb->r[jat];
+      key = b * nkey;
+      slot = agbnp3_h_find(table2d->y2i, key);
+      if(slot < 0){
+	agbnp3_errprint( "agbnp3_test_create_ctablef42d_hash(): unable to find entry for radii combination (%f,%f)\n", agb->r[iat], agb->r[jat]);
+	return AGBNP_ERR;
+      }
+    }
+  }
+  
+#ifdef NOTNOW
   table = table2d->table[slot];
+
 
 
   {
@@ -915,7 +935,7 @@ int agbnp3_test_create_ctablef42d_hash(AGBNPdata *agb, float amax, C1Table2DH *t
       printf("IntHash: radius: %f %f\n",x, f);
     }
   }
-  
+#endif
   
 
   return AGBNP_OK;

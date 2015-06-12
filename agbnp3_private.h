@@ -126,14 +126,14 @@ typedef double float_a;
 
 /* lower and upper limits of switching function for HB correction */
 #ifndef AGBNP_HB_SWA
-#define AGBNP_HB_SWA (0.50)
+#define AGBNP_HB_SWA (0.65)
 #endif
 #ifndef AGBNP_HB_SWB 
-#define AGBNP_HB_SWB (0.85)
+#define AGBNP_HB_SWB (1.00)
 #endif
 /* limit below which a water site is neglected */
 #ifndef AGBNP_HB_SWA0
-#define AGBNP_HB_SWA0 (0.4)
+#define AGBNP_HB_SWA0 (0.60)
 #endif
 
 /* "jump" parameter of hash table */

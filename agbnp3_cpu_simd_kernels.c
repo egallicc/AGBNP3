@@ -280,6 +280,39 @@ int agbnp3_gb_energy_inner_nolist_ps(
   *egb_pair += ent[0] + ent[1] + ent[2] + ent[3];
   return AGBNP_OK;
 }
+
+/* returns loop indexes to find leading, trailing, and quad sections */
+void agbnp3_qindex(int jat, int n, int *beglead, int *endlead, int* begquad, int* endquad, int* begtrail, int* endtrail){
+  int lead1, lead2, s4, e4, trail1, trail2;
+
+  *beglead = *endlead = *begquad = *endquad = *begtrail = *endtrail = -1;
+  if(jat > n - 1) return;
+
+  s4 = jat%4 == 0 ? jat : ((jat/4)+1)*4;
+  e4 = (n/4)*4 - 1;
+  if(e4 - s4 + 1 < 4) {// no quads
+    *beglead = jat;
+    *endlead = n - 1;
+    return;
+  }
+
+  lead1 = jat%4 == 0 ? -1 : jat;
+  lead2 = s4 - 1;
+  if(lead1 < 0 || lead1 > lead2) lead2 = lead1 = -1;
+
+  trail1 = e4+1;
+  trail2 = n-1;
+  if(trail1 > trail2) trail1 = trail2 = -1;
+
+  *beglead = lead1;
+  *endlead = lead2;
+
+  *begquad = s4;
+  *endquad = e4;
+
+  *begtrail = trail1;
+  *endtrail = trail2;
+} 
 #endif
 
 
@@ -309,6 +342,8 @@ All arrays are assumed to be 16-byte aligned.
   float egb_self_h = 0.0;
   float egb_pair_h = 0.0;
 
+  int beglead, endlead, begquad, endquad, begtrail, endtrail;
+
   float *dera_m = agb->agbw->dera;
 
   memset(dgbdrx,0,natoms*sizeof(float));
@@ -323,34 +358,31 @@ All arrays are assumed to be 16-byte aligned.
 
 #ifdef USE_SSE
     //SSE inner loop
-
+    agbnp3_qindex(iat+1, natoms, &beglead, &endlead, &begquad, &endquad, &begtrail, &endtrail);
     // leading j-particles before the start of the quads
-    jstart = iat+1;
-    if(jstart%4 != 0){// first j-particle not at quad boundary
-      jend = ((jstart/4)+1)*4-1;
+    if(beglead >= 0){// first j-particle not at quad boundary
       agbnp3_gb_energy_inner_nolist_soa(agb, iat, natoms, 
-					jstart, jend,
+					beglead, endlead,
 					x, y, z, charge, br, dera,
 					dgbdrx, dgbdry, dgbdrz, 
 					&egb_pair_h, dielectric_factor);
-      jstart = jend + 1;
     }
 
     /* compute the bulk in group of quads */
-    agbnp3_gb_energy_inner_nolist_ps(
-	     agb, iat, natoms, 
-	     jstart, 
-	     x, y, z,
-	     charge, br, dera,
-	     dgbdrx, dgbdry, dgbdrz, 
-	     &egb_pair_h, dielectric_factor);
+    if(begquad >= 0){
+      agbnp3_gb_energy_inner_nolist_ps(
+				       agb, iat, natoms, 
+				       begquad, 
+				       x, y, z,
+				       charge, br, dera,
+				       dgbdrx, dgbdry, dgbdrz, 
+				       &egb_pair_h, dielectric_factor);
+    }
 
     // add the trailing left-overs
-    jstart = (natoms/4)*4; // place start at the beg. of the last and incomplete quad 
-    jend = natoms-1;
-    if(jend>=jstart){
+    if(begtrail >= 0){
       agbnp3_gb_energy_inner_nolist_soa(agb, iat, natoms, 
-					jstart, jend,
+					begtrail, endtrail,
 					x, y, z, charge, br, dera,
 					dgbdrx, dgbdry, dgbdrz, 
 					&egb_pair_h, dielectric_factor);
