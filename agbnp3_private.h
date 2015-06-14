@@ -226,6 +226,13 @@ typedef struct c1table2dh_ {
   C1Table **table;     /* list of look-up tables */
 } C1Table2DH;
 
+/* a list of lookup tables */
+typedef struct c1table2dl_ {
+  unsigned int size;   /* number of look-up tables */
+  C1Table **table;     /* list of look-up tables */
+} C1Table2DL;
+
+
 
 
 typedef struct AGBworkdata_ {
@@ -340,6 +347,7 @@ typedef struct AGBworkdata_ {
   float *qdv;
   float *qR1v;
   float *qR2v;
+  int   *qbtype;
   float *qqv;
   float *qdqv;
   float *qav;
@@ -384,6 +392,8 @@ typedef struct AGBNPdata_ {
 
   float_a *x, *y, *z; /* coordinates */
   float_a *r;  /* atomic radii (input + offset) */
+  int *rtype; /* radius type for look up table */
+  int nrtype; /* number of radius types */
   float_a *charge; /* the partial charge of each atom */
 
   float_a *igamma, *sgamma; /* np parameters */
@@ -448,8 +458,9 @@ typedef struct AGBNPdata_ {
   
   int verbose;
 
-  C1Table2D *f4c1table2d;//lookup table for i4 function
-  C1Table2DH *f4c1table2dh;//lookup table for i4 function
+  C1Table2D *f4c1table2d;//lookup table for i4 function (numerical)
+  C1Table2DH *f4c1table2dh;//lookup table for i4 function (hash)
+  C1Table2DL *f4c1table2dl;//lookup table for i4 function (list)
 } AGBNPdata;
 
 
@@ -486,6 +497,7 @@ int agbnp3_init_agbworkdata(AGBNPdata *agbdata, AGBworkdata *agbw);
 int agbnp3_tag_ok(int tag);
 
 float_a agbnp3_i4(float_a rij, float_a Ri, float_a Rj, float_a *dr);
+float_a agbnp3_i4ov(float_a rij, float_a Ri, float_a Rj, float_a *dr);
 float_a agbnp3_i4p(AGBNPdata *data, float_a rij, float_a Ri, float_a Rj, float_a *dr);
 float_a agbnp3_swf_area(float_a x, float_a *fp);
 float_a agbnp3_swf_vol3(float_a x, float_a *fp, float_a *fpp, float_a a, float_a b);
@@ -677,7 +689,7 @@ int agbnp3_create_ctablef4(int n, float_a amax, float_a b,
 int agbnp3_create_ctablef42d(AGBNPdata *agb,
 			     int na, float_a amax, 
 			     int nb, float_a bmax, 
-			     C1Table2DH **table2d);
+			     C1Table2DL **table2d);
 int agbnp3_interpolate_ctable(C1Table *c1table, float_a x, 
 			     float_a *f, float_a *fp);
 int agbnp3_interpolate_ctablef42d(C1Table2DH *table2d, float_a x, float_a y,
@@ -730,12 +742,12 @@ void agbnp3_cspline_interpolate_ps(float *kv, float *xh, float dx, int m,
 				   float* y2p, float *y2,
 				   float *f, float *fp);
 #endif
-int agbnp3_interpolate_ctablef42d_soa(C1Table2DH *table2d, float *x, float *ym, 
+int agbnp3_interpolate_ctablef42d_soa(C1Table2DL *table2d, float *x, float *ym, int *btype,
 			 int m, float *f, float *fp,
 			 float *kv, float *xh, float *yp, float *y, float *y2p, float *y2,
                          float *f1, float *f2, float *fp1, float *fp2);
 
-int agbnp3_i4p_soa(AGBNPdata *agb, float* rij, float *Ri, float *Rj, 
+int agbnp3_i4p_soa(AGBNPdata *agb, float* rij, float *Ri, float *Rj, int *btype,
 		   int m, float *f, float *fp,
 		   float *a, float *b,
 		   float *qkv, float *qxh, float *qyp, float *qy, float *qy2p, float *qy2,
@@ -743,7 +755,7 @@ int agbnp3_i4p_soa(AGBNPdata *agb, float* rij, float *Ri, float *Rj,
 
 
 #ifdef USE_SSE
-int agbnp3_i4p_ps(AGBNPdata *agb, float* rij, float *Ri, float *Rj, 
+int agbnp3_i4p_ps(AGBNPdata *agb, float* rij, float *Ri, float *Rj, int *btype,
 		  int m, float *f, float *fp,
 		  float *a, float *b,
 		  float *qkv, float *qxh, float *qyp, float *qy, float *qy2p, float *qy2,
@@ -761,8 +773,8 @@ int agbnp3_reset_buffers(AGBNPdata *agb, AGBworkdata *agbw_h);
 
 /* get the number of "radius types" */
 int agbnp3_list_radius_types(AGBNPdata *agb, float **radii);
-int agbnp3_create_ctablef42d_hash(AGBNPdata *agb, int na, float_a amax, 
-				  C1Table2DH **table2d);
+int agbnp3_create_ctablef42d_list(AGBNPdata *agb, int na, float_a amax, 
+				  C1Table2DL **table2d);
 int agbnp3_test_create_ctablef42d_hash(AGBNPdata *agb, float amax, C1Table2DH *table2d);
 
 int agbnp3_reallocate_gbuffers(AGBworkdata *agbw, int size);

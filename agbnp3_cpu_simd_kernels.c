@@ -518,6 +518,7 @@ int agbnp3_inverse_born_radii_nolist_soa(AGBNPdata *agb, AGBworkdata *agbw_h,
   float *dv = agbw_h->qdv;
   float *R1v = agbw_h->qR1v;
   float *R2v = agbw_h->qR2v;
+  int *btype = agbw_h->qbtype;
   float *qv = agbw_h->qqv;
   float *dqv = agbw_h->qdqv;
 
@@ -535,6 +536,8 @@ int agbnp3_inverse_born_radii_nolist_soa(AGBNPdata *agb, AGBworkdata *agbw_h,
   float *qfp1= agbw_h->qfp1;
   float *qfp2= agbw_h->qfp2;
 
+  int nrtype = agb->nrtype;
+  int *rtype = agb->rtype;
 
   float xiat, yiat, ziat;
 
@@ -561,18 +564,26 @@ int agbnp3_inverse_born_radii_nolist_soa(AGBNPdata *agb, AGBworkdata *agbw_h,
       dv[iv] = d;
       R1v[iv] = rjat - cvdw;
       R2v[iv] = riat;
+      btype[iv] = rtype[jat]*nrtype + rtype[iat];
+
+      //fprintf(stderr,"rc: %d %d %d\n", iat, jat, btype[iv]);
+
       iv += 1;
       dv[iv] = d;
       R1v[iv] = riat - cvdw;
       R2v[iv] = rjat;
+      btype[iv] = rtype[iat]*nrtype + rtype[jat];
+
+      //fprintf(stderr,"rc: %d %d %d\n", iat, jat, btype[iv]);
+
       iv += 1;
     }
 
 #ifdef USE_SSE
-    agbnp3_i4p_ps(agb, dv, R1v, R2v, iv, qv, dqv, av, bv,
+    agbnp3_i4p_ps(agb, dv, R1v, R2v, btype, iv, qv, dqv, av, bv,
 		  qkv, qxh, qyp, qy, qy2p, qy2, qf1, qf2, qfp1, qfp2);
 #else
-    agbnp3_i4p_soa(agb, dv, R1v, R2v, iv, qv, dqv, av, bv,
+    agbnp3_i4p_soa(agb, dv, R1v, R2v, btype, iv, qv, dqv, av, bv,
 		  qkv, qxh, qyp, qy, qy2p, qy2, qf1, qf2, qfp1, qfp2);
 #endif
     
@@ -583,18 +594,27 @@ int agbnp3_inverse_born_radii_nolist_soa(AGBNPdata *agb, AGBworkdata *agbw_h,
       spjat = sp[jat];
 
       q = qv[iv];
+      
+      //printf("qq: %f %f\n",dv[iv],q*spiat);
+      //printf("qq: %f %f\n",q, agbnp3_i4(dv[iv],R1v[iv],R2v[iv],&dr4));
+
       dr4 = dqv[iv];
       iv += 1;
       br1[jat] -= fourpi1*q*spiat;
       q4cache[iq4cache++] = q;
       q4cache[iq4cache++] = dr4;
 
+
       q = qv[iv];
+      //printf("qq: %f %f\n",dv[iv],q*spjat);
+      //printf("qq: %f %f\n",q, agbnp3_i4(dv[iv],R1v[iv],R2v[iv],&dr4));
+
       dr4 = dqv[iv];
       iv += 1;
       br1[iat] -= fourpi1*q*spjat;
       q4cache[iq4cache++] = q;
       q4cache[iq4cache++] = dr4;
+
 
     }
 
@@ -621,14 +641,18 @@ int agbnp3_inverse_born_radii_nolist_soa(AGBNPdata *agb, AGBworkdata *agbw_h,
       dv[iv] = d;
       R1v[iv] = r[jat]-cvdw;
       R2v[iv] = riat;
+      btype[iv] = rtype[jat]*nrtype + rtype[iat];
+
+      //fprintf(stderr,"rc: %d %d %d\n", iat, jat, btype[iv]);
+
       iv += 1;
     }
 
 #ifdef USE_SSE
-    agbnp3_i4p_ps(agb, dv, R1v, R2v, iv, qv, dqv, av, bv,
+    agbnp3_i4p_ps(agb, dv, R1v, R2v, btype, iv, qv, dqv, av, bv,
 		  qkv, qxh, qyp, qy, qy2p, qy2, qf1, qf2, qfp1, qfp2);
 #else
-    agbnp3_i4p_soa(agb, dv, R1v, R2v, iv, qv, dqv, av, bv,
+    agbnp3_i4p_soa(agb, dv, R1v, R2v, btype, iv, qv, dqv, av, bv,
 		  qkv, qxh, qyp, qy, qy2p, qy2, qf1, qf2, qfp1, qfp2);
 #endif
     
@@ -643,6 +667,7 @@ int agbnp3_inverse_born_radii_nolist_soa(AGBNPdata *agb, AGBworkdata *agbw_h,
       br1[jat] -= fourpi1*q*spiat;
       q4cache[iq4cache++] = q;
       q4cache[iq4cache++] = dr4;
+
     }
 
   }
@@ -943,7 +968,7 @@ void agbnp3_cspline_interpolate_ps(float *kvf, float *xhf, float dx, int m,
 #endif
 
 #ifdef USE_SSE
-int agbnp3_i4p_ps(AGBNPdata *agb, float* rijf, float *Rif, float *Rjf, 
+int agbnp3_i4p_ps(AGBNPdata *agb, float* rijf, float *Rif, float *Rjf, int *btype,
       int m, float *ff, float *fpf,
       float *mbuffera, float *mbufferb,
       float *qkv, float *qxh, float *qyp, float *qy, float *qy2p, float *qy2,
@@ -975,8 +1000,8 @@ int agbnp3_i4p_ps(AGBNPdata *agb, float* rijf, float *Rif, float *Rjf,
     b[i] = Ri[i]*Rjinv;
   }
 
-  agbnp3_interpolate_ctablef42d_soa(agb->f4c1table2dh, 
-		       (float *)a, (float *)b, m, ff, fpf,
+  agbnp3_interpolate_ctablef42d_soa(agb->f4c1table2dl, 
+				    (float *)a, (float *)b, btype, m, ff, fpf,
 	               qkv, qxh, qyp, qy, qy2p, qy2, qf1, qf2, qfp1, qfp2);
 
   for(i=0;i<end;i++){

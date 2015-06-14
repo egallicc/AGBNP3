@@ -210,6 +210,9 @@ int agbnp3_new(int *tag, int natoms,
     agbdata->r[iat] = r[int2ext[iat]] + AGBNP_RADIUS_INCREMENT;
   }
 
+  /* allocates radius types */
+  agbnp3_vcalloc((void **)&(agbdata->rtype), natoms*sizeof(int));
+
   /* allocates and set charges */
   agbnp3_vcalloc((void **)&(agbdata->charge), natoms*sizeof(float_a));
   if(!agbdata->charge){
@@ -435,6 +438,7 @@ int agbnp3_delete(int tag){
   if(agb->z){ agbnp3_vfree(agb->z); agb->z = NULL;}
   if(agb->r){ agbnp3_vfree(agb->r); agb->r = NULL;}
   if(agb->charge){ agbnp3_vfree(agb->charge); agb->charge = NULL;}
+  if(agb->rtype){ agbnp3_vfree(agb->rtype); agb->rtype = NULL;}
   if(agb->igamma){ agbnp3_vfree(agb->igamma); agb->igamma = NULL;}
   if(agb->sgamma){ agbnp3_vfree(agb->sgamma); agb->sgamma = NULL;}
   if(agb->ialpha){ agbnp3_vfree(agb->ialpha); agb->ialpha = NULL;}
@@ -579,6 +583,7 @@ int agbnp3_ener(int tag, int init,
   data->natoms = 0;
   data->x = data->y = data->z = NULL;
   data->r = NULL;
+  data->rtype = NULL;
   data->charge = NULL;
   data->igamma = data->sgamma = NULL;
   data->ialpha = data->salpha = NULL;
@@ -1024,7 +1029,8 @@ int agbnp3_atom_reorder(AGBNPdata *agb, int nhydrogen, int *ihydrogen){
 
   if(agbw->qdv){agbnp3_vfree(agbw->qdv); agbw->qdv = NULL;}
   if(agbw->qR1v){agbnp3_vfree(agbw->qR1v); agbw->qR1v = NULL;}
-  if(agbw->qR2v){agbnp3_vfree(agbw->qR2v); agbw->qdv = NULL;}
+  if(agbw->qR2v){agbnp3_vfree(agbw->qR2v); agbw->qR2v = NULL;}
+  if(agbw->qbtype){agbnp3_vfree(agbw->qbtype); agbw->qbtype = NULL;}
   if(agbw->qqv){agbnp3_vfree(agbw->qqv); agbw->qqv = NULL;}
   if(agbw->qdqv){agbnp3_vfree(agbw->qdqv); agbw->qdqv = NULL;}
   if(agbw->qav){agbnp3_vfree(agbw->qav); agbw->qav = NULL;}
@@ -1096,7 +1102,7 @@ int agbnp3_init_agbworkdata(AGBNPdata *agb, AGBworkdata *agbw){
 }
 
 float_a agbnp3_swf_area(float_a x, float_a *fp){
-  static const float_a a2 = 5.f*5.f;
+  static const float_a a2 = 8.f*8.f;
   float_a t, f, x2;
  
   if(x<0.0){
@@ -3936,6 +3942,41 @@ float_a agbnp3_i4(float_a rij, float_a Ri, float_a Rj,
 
   return q;
 }
+
+ float_a agbnp3_ogauss_2body_smpl(float_a d2, float_a p1, float_a p2, 
+				  float_a c1, float_a c2){
+  float_a deltai = 1./(c1+c2);
+  float_a p = p1*p2;
+  float_a kappa, gvol;
+
+#ifdef USE_SSE
+  kappa = expbf(-c1*c2*d2*deltai);
+#else
+  kappa = exp(-c1*c2*d2*deltai);
+#endif
+  gvol = p*kappa*pow(pi*deltai,1.5);
+
+  return gvol;
+}
+
+
+
+/* same agbnp3_i4 but increases radius of j sphere based on the overlap
+   between i and j.
+   Derivative is approximate.
+ */
+float_a agbnp3_i4ov(float_a rij, float_a Ri, float_a Rj, float_a *dr4){
+  float_a ai = KFC/(Ri*Ri);
+  float_a pii = PFC;
+  float_a aj = KFC/(Ri*Ri); 
+  float_a pjj = PFC;
+  float_a d2 = rij*rij;
+  float_a gvol =  agbnp3_ogauss_2body_smpl(d2, pii, pjj, ai, aj);
+  float_a volj = 4.*pi*Rj*Rj*Rj/3.;
+  float_a newRj = pow((volj+2.*gvol)/volj,1./3.)*Rj;
+  //printf("RR: %f %f\n", Rj, newRj);
+  return agbnp3_i4(rij, Ri, newRj, dr4);
+} 
 
 
  int agbnp3_neighbor_lists(AGBNPdata *agb, AGBworkdata *agbw,

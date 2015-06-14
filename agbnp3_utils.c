@@ -111,15 +111,15 @@ int agbnp3_vrealloc(void **memptr, const size_t old_size, const size_t new_size)
 int agbnp3_create_ctablef42d(AGBNPdata *agb,
 			     int na, float_a amax, 
 			    int nb, float_a bmax, 
-			    C1Table2DH **table2d){
-  C1Table2DH *tbl2d;
+			    C1Table2DL **table2d){
+  C1Table2DL *tbl2d;
   float_a b, db;
 
   int i;
   float_a bmax1;
 
 
-  agbnp3_create_ctablef42d_hash(agb, na, amax, &tbl2d);
+  agbnp3_create_ctablef42d_list(agb, na, amax, &tbl2d);
   *table2d = tbl2d;
 
   //agbnp3_test_create_ctablef42d_hash(agb, 0.f, tbl2d);
@@ -146,13 +146,13 @@ int agbnp3_interpolate_ctablef42d(C1Table2DH *table2d, float_a x, float_a y,
 
 /* initializes i4p(), the lookup table version of i4 */
 int agbnp3_init_i4p(AGBNPdata *agb){
-  if(agb->f4c1table2dh != NULL){
+  if(agb->f4c1table2dl != NULL){
     return AGBNP_OK;
   }
   if(agbnp3_create_ctablef42d(agb, 
 			      F4LOOKUP_NA, F4LOOKUP_MAXA,
 			      F4LOOKUP_NB, F4LOOKUP_MAXB,
-			      &(agb->f4c1table2dh)) != AGBNP_OK){
+			      &(agb->f4c1table2dl)) != AGBNP_OK){
     agbnp3_errprint("agbnp3_init_i4p(): error in agbnp3_create_ctablef42d()\n");
     return AGBNP_ERR;
   }
@@ -294,7 +294,7 @@ void agbnp3_cspline_interpolate_soa(float *kv, float *xh, float dx, int m,
   }
 }
 
-int agbnp3_i4p_soa(AGBNPdata *agb, float* rij, float *Ri, float *Rj, 
+int agbnp3_i4p_soa(AGBNPdata *agb, float* rij, float *Ri, float *Rj, int *btype,
 		   int m, float *f, float *fp,
 		   float *mbuffera, float *mbufferb,
 		   float *qkv, float *qxh, float *qyp, float *qy, float *qy2p, float *qy2,
@@ -312,7 +312,7 @@ int agbnp3_i4p_soa(AGBNPdata *agb, float* rij, float *Ri, float *Rj,
     //printf("i4p: %d %f %f\n", i, a[i], b[i]);
   }
 
-  agbnp3_interpolate_ctablef42d_soa(agb->f4c1table2dh, a, b, m, f, fp,
+  agbnp3_interpolate_ctablef42d_soa(agb->f4c1table2dl, a, b, btype, m, f, fp,
 	               qkv, qxh, qyp, qy, qy2p, qy2, qf1, qf2, qfp1, qfp2);
 
 #pragma vector aligned
@@ -329,27 +329,18 @@ int agbnp3_i4p_soa(AGBNPdata *agb, float* rij, float *Ri, float *Rj,
 
 /* vectorized form of  agbnp3_interpolate_ctablef42d() */
 int agbnp3_interpolate_ctablef42d_soa
-(C1Table2DH *table2d, float *x, float *ym, int m, float *f, float *fp,
+(C1Table2DL *table2d, float *x, float *ym, int *btype, int m, float *f, float *fp,
  float *kv, float *xh, float *yp, float *y, float *y2p, float *y2,
  float *f1, float *f2, float *fp1, float *fp2){
 
-  int i, iy, k, key;
+  int i, iy, k, slot;
   float dy, dyinv, dx, dxinv, yn;
   float a, b;
   C1Table *table1, *table2;
-  int nkey = table2d->nkey;
 
   for(i=0;i<m;i++){
-
-    key = ym[i] * nkey;
-    iy = agbnp3_h_find(table2d->y2i, key); 
-
-    if(iy < 0) {
-      agbnp3_errprint("agbnp3_interpolate_ctablef42d_soa(): internal error: could not find interpolation table for radius ratio %f\n", ym[i]/(float)nkey);
-      return AGBNP_ERR;
-    }
     
-    table1 = table2d->table[iy];
+    table1 = table2d->table[btype[i]];
 
     dx = table1->dx;
     dxinv = table1->dxinv;
@@ -415,7 +406,7 @@ int agbnp3_create_ctablef4(int n, float_a amax, float_a b,
 
   a = 0.0;
   for(i=0;i<n-1;i++){
-    q1 = agbnp3_i4(a,b,Rj,&dr);
+    q1 = agbnp3_i4ov(a,b,Rj,&dr);
     if(i==0) yp1 = dr;
     y[i] = q1;
     a += da;
@@ -829,12 +820,14 @@ int agbnp3_list_radius_types(AGBNPdata *agb, float **radii){
     for(i=0;i<ntypes;i++){
       if( fabs(riat-radius[i]) < FLT_MIN ){
 	found = 1;
+	agb->rtype[iat] = i;
 	break;
       }
     }
 
     /* if not found add it, increment set size */
     if(!found){
+      agb->rtype[iat] = ntypes;
       radius[ntypes++] = riat;
     }
 
@@ -844,9 +837,9 @@ int agbnp3_list_radius_types(AGBNPdata *agb, float **radii){
   return ntypes;
 }
 
-int agbnp3_create_ctablef42d_hash(AGBNPdata *agb, int na, float_a amax, 
-				  C1Table2DH **table2d){
-  C1Table2DH *tbl2d;
+int agbnp3_create_ctablef42d_list(AGBNPdata *agb, int na, float_a amax, 
+				  C1Table2DL **table2d){
+  C1Table2DL *tbl2d;
   float b;
   int size;
   float *radii;
@@ -856,32 +849,25 @@ int agbnp3_create_ctablef42d_hash(AGBNPdata *agb, int na, float_a amax,
   float c = AGBNP_RADIUS_INCREMENT;
   int nkey;
 
-  tbl2d = malloc(sizeof(C1Table2DH));
+  tbl2d = malloc(sizeof(C1Table2DL));
 
   /* get list of radii */
   ntypes = agbnp3_list_radius_types(agb, &radii);
+  agb->nrtype = ntypes;
 
   /* number of look-up tables is ~ntypes^2 */
-  size = agbnp3_two2n_size(ntypes*ntypes);
-
-  //TBF
-  size *= 2;
+  size = ntypes*ntypes;
 
   tbl2d->table = (C1Table **)malloc(size*sizeof(C1Table *));
-  tbl2d->y2i = agbnp3_h_create(0, size, 1);
-  agbnp3_h_init(tbl2d->y2i);
-
-  /* set multiplicative factor for key */
-  tbl2d->nkey = 10000;
-  nkey = tbl2d->nkey;
 
   /* now loop over all possible combinations of radii and constructs look up table for each */
   for(i=0;i<ntypes;i++){
     for(j=0;j<ntypes;j++){
 
       b = (radii[i]-c)/radii[j];
-      key = b * nkey;
-      slot = agbnp3_h_enter(tbl2d->y2i, key);
+      slot = i*ntypes + j; //index in list of tables
+
+      //fprintf(stderr,"agbnp3_create_ctablef42d_hash(): creating table for radius ratio: %f (key %d)\n", b, slot);
       if(agbnp3_create_ctablef4(na,amax,b,&(tbl2d->table[slot]))!=AGBNP_OK){
 	agbnp3_errprint( "agbnp3_create_ctablef42d_hash(): error in agbnp3_create_ctablef4()\n");
 	free(radii);
@@ -1026,6 +1012,9 @@ int agbnp3_reallocate_qbuffers(AGBworkdata *agbw, int size){
   agbnp3_vrealloc((void **)&(agbw->qdv), n, m);
   agbnp3_vrealloc((void **)&(agbw->qR1v), n , m);
   agbnp3_vrealloc((void **)&(agbw->qR2v), n, m);
+
+  agbnp3_vrealloc((void **)&(agbw->qbtype), old_size*sizeof(int), size*sizeof(int));
+
   agbnp3_vrealloc((void **)&(agbw->qqv), n, m);
   agbnp3_vrealloc((void **)&(agbw->qdqv), n, m);
   agbnp3_vrealloc((void **)&(agbw->qav), n, m);
