@@ -3949,11 +3949,7 @@ float_a agbnp3_i4(float_a rij, float_a Ri, float_a Rj,
   float_a p = p1*p2;
   float_a kappa, gvol;
 
-#ifdef USE_SSE
-  kappa = expbf(-c1*c2*d2*deltai);
-#else
   kappa = exp(-c1*c2*d2*deltai);
-#endif
   gvol = p*kappa*pow(pi*deltai,1.5);
 
   return gvol;

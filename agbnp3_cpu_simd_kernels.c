@@ -74,7 +74,7 @@ int agbnp3_gb_energy_inner_nolist_soa(
    
   int k;
   float xi, yi, zi, qi, bi;
-  float d2, dx, dy, dz, qq, bb, etij, fgb, fgb3, mw, atij, egb;
+  float d2, dx, dy, dz, qq, qqf, bb, etij, fgb, fgb3, mw, atij, egb;
   float gx, gy, gz;
   float valid_mask;
   float *q = charge;
@@ -106,13 +106,14 @@ int agbnp3_gb_energy_inner_nolist_soa(
     d2 = dx*dx + dy*dy + dz*dz;
     valid_mask = d2 > 0 ? 1.0f : 0.0f;
     qq = valid_mask*qi*q[k];
+    qqf = vdielf*qq;
     bb = bi*br[k];
     etij = expf(-pt25*d2/bb);
     fgb = 1./sqrtf(d2 + bb*etij);
-    egb = vdielf*qq*fgb;
+    egb = qqf*fgb;
 
     fgb3 = fgb*fgb*fgb;
-    mw = qq*(one-pt25*etij)*fgb3;
+    mw = -qqf*(one-pt25*etij)*fgb3;
 
     // printf("mw= %f %f\n",mw,dielectric_factor);
 
@@ -184,7 +185,7 @@ int agbnp3_gb_energy_inner_nolist_ps(
    
   int k4, k4start;
   __m128 xi4, yi4, zi4, qi4, bi4;
-  __m128 d2, dx, dy, dz, qq, bb, etij, fgb, fgb3, mw, atij, egb;
+  __m128 d2, dx, dy, dz, qq, qqf, bb, etij, fgb, fgb3, mw, atij, egb;
   __m128 gx, gy, gz;
 
 
@@ -242,13 +243,14 @@ int agbnp3_gb_energy_inner_nolist_ps(
     d2 = dx*dx + dy*dy + dz*dz;
     valid_mask = _mm_cmpgt_ps(d2, _mm_setzero_ps());
     qq = qi4*q4[k4];
+    qqf = vdielf*qq;
     bb = bi4*b4[k4];
     etij = exp_ps(-pt25*d2/bb);
     fgb = rsqrt_ps(d2 + bb*etij);
-    egb = vdielf*qq*fgb;
+    egb = qqf*fgb;
 
     fgb3 = fgb*fgb*fgb;
-    mw = qq*(one-pt25*etij)*fgb3;
+    mw = -qqf*(one-pt25*etij)*fgb3;
 
     gx = _mm_and_ps(valid_mask,mw*dx);
     gy = _mm_and_ps(valid_mask,mw*dy);
