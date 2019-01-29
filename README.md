@@ -151,7 +151,7 @@ typedef double float_i; //can be set to float, see agbnp3.h
  Return values:
  AGBNP_OK - AGBNP instance deleted.
  AGBNP_ERR - error deleting AGBNP instance. Consult error message
-             on stderr.generalized born and van der Waals energies
+             on stderr.
  
 ``` 
 int agbnp3_ener(int tag, int init,
@@ -171,6 +171,8 @@ int agbnp3_ener(int tag, int init,
  init: unused
 
  x, y, z: current atomic positions [Angstroms]
+ 
+ Output:
 
  sp: atomic volume scaling factor
 
